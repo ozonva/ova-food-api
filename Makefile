@@ -1,5 +1,7 @@
+.PHONY: build,run
+
 build:
-	go build -o main.exe cmd/ova-food-api/main.go
+	GOOS=linux go build -o ./bin/main ./cmd/ova-food-api
 
 run:
-	go run cmd/ova-food-api/main.go
+	go run ./cmd/ova-food-api
