@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	myutil "ova-food-api/internal/utils"
+	myutil "github.com/ozonva/ova-food-api/internal/utils"
 )
 
 func main() {
@@ -13,12 +13,12 @@ func main() {
 	fmt.Println("chanks: ", chanks)
 
 	testMap := map[int]string{1: "a", 2: "b", 3: "c"}
-	inversed, err := myutil.InverseMap(&testMap)
+	inversed, err := myutil.InverseMap(testMap)
 	if err != nil {
 		fmt.Println(err.Error())
 	} else {
 		fmt.Println("\nmap: ", testMap)
-		fmt.Println("inversed: ", *inversed)
+		fmt.Println("inversed: ", inversed)
 	}
 
 	filter := []int{2, 4, 6}
