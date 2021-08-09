@@ -41,7 +41,7 @@ func SliceFilter(sliceIn []int, filter []int) []int {
 	for _, elem := range filter {
 		tmpset[elem] = true
 	}
-	var newSlice []int
+	newSlice := make([]int, 0)
 	for _, elem := range sliceIn {
 		if _, ok := tmpset[elem]; !ok {
 			newSlice = append(newSlice, elem)
