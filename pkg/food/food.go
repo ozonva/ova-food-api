@@ -25,11 +25,11 @@ func (f *Food) String() string {
 	return string(mf)
 }
 
-func CreateFood(foodInfo []byte) (f Food) {
+func CreateFood(foodInfo []byte) (f *Food) {
 	var food Food
 	err := json.Unmarshal(foodInfo, &food)
 	if err != nil {
 		panic(err.Error())
 	}
-	return food
+	return &food
 }

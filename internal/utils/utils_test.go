@@ -3,6 +3,9 @@ package utils
 import (
 	"reflect"
 	"testing"
+
+	f "github.com/ozonva/ova-food-api/pkg/food"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSliceToChanks(t *testing.T) {
@@ -26,6 +29,47 @@ func TestSliceToChanks(t *testing.T) {
 	}
 
 }
+
+func TestSplitToBulks(t *testing.T) {
+	coffee := f.Food{0, 0, f.Drinks, "Coffee", 60}
+	pizza := f.Food{1, 0, f.Foods, "Pizza", 300}
+	tea := f.Food{2, 1, f.Drinks, "Tea", 100}
+	bounty := f.Food{3, 2, f.Foods, "Bounty", 100}
+	cola := f.Food{4, 3, f.Drinks, "Cola", 200}
+
+	slice := []f.Food{coffee, pizza, tea, bounty, cola}
+	testTables := []struct {
+		chSize         int
+		expextedChanks [][]f.Food
+	}{
+		{0, [][]f.Food{slice}},
+		{1, [][]f.Food{{coffee}, {pizza}, {tea}, {bounty}, {cola}}},
+		{2, [][]f.Food{{coffee, pizza}, {tea, bounty}, {cola}}},
+		{3, [][]f.Food{{coffee, pizza, tea}, {bounty, cola}}},
+		{6, [][]f.Food{slice}},
+	}
+	for _, test := range testTables {
+		assert.Equal(t, test.expextedChanks, SplitToBulks(slice, test.chSize))
+	}
+}
+
+func TestFoodsToMap(t *testing.T) {
+	coffee := f.Food{0, 0, f.Drinks, "Coffee", 60}
+	pizza := f.Food{1, 0, f.Foods, "Pizza", 300}
+	tea := f.Food{2, 1, f.Drinks, "Tea", 100}
+	bounty := f.Food{3, 2, f.Foods, "Bounty", 100}
+	cola := f.Food{4, 3, f.Drinks, "Cola", 200}
+
+	slice := []f.Food{coffee, pizza, tea, bounty, cola}
+	expMap := map[uint64]f.Food{0: coffee, 1: pizza, 2: tea, 3: bounty, 4: cola}
+	res, err := FoodsToMap(slice)
+	if err == nil {
+		assert.Equal(t, expMap, res)
+	} else {
+		assert.Error(t, err)
+	}
+}
+
 func TestInverseMap(t *testing.T) {
 	testMap := map[int]string{1: "a", 2: "b", 3: "c"}
 	resMap := map[string]int{"a": 1, "b": 2, "c": 3}
