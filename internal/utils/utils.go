@@ -3,6 +3,8 @@ package utils
 import (
 	"errors"
 	"math"
+
+	f "github.com/ozonva/ova-food-api/pkg/food"
 )
 
 func SliceToChanks(sliceIn []int, chankSize int) [][]int {
@@ -23,6 +25,37 @@ func SliceToChanks(sliceIn []int, chankSize int) [][]int {
 		}
 		return res
 	}
+}
+
+func SplitToBulks(sliceIn []f.Food, chankSize int) [][]f.Food {
+	if sliceIn == nil || chankSize >= len(sliceIn) || chankSize < 1 {
+		res := make([][]f.Food, 1)
+		res[0] = sliceIn
+		return res
+	} else {
+		numChanks := int(math.Ceil(float64(len(sliceIn)) / float64(chankSize)))
+		res := make([][]f.Food, numChanks)
+		k := -1
+		for i := 0; i < len(sliceIn); i++ {
+			if i%chankSize == 0 {
+				k++
+				res[k] = make([]f.Food, 0)
+			}
+			res[k] = append(res[k], sliceIn[i])
+		}
+		return res
+	}
+}
+
+func FoodsToMap(foods []f.Food) (map[uint64]f.Food, error) {
+	res := make(map[uint64]f.Food)
+	for _, elem := range foods {
+		if _, ok := res[elem.Id]; ok {
+			return nil, errors.New("cant create map, not uniq id at foods")
+		}
+		res[elem.Id] = elem
+	}
+	return res, nil
 }
 
 func InverseMap(mapIn map[int]string) (map[string]int, error) {
