@@ -17,7 +17,7 @@ type Food struct {
 	PortionSize float32
 }
 
-func (f *Food) String() string {
+func (f Food) String() string {
 	mf, err := json.Marshal(f)
 	if err != nil {
 		panic(err.Error())
@@ -25,7 +25,7 @@ func (f *Food) String() string {
 	return string(mf)
 }
 
-func CreateFood(foodInfo []byte) (f *Food) {
+func CreateFood(foodInfo []byte) *Food {
 	var food Food
 	err := json.Unmarshal(foodInfo, &food)
 	if err != nil {

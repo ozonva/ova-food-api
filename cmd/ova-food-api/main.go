@@ -9,12 +9,12 @@ import (
 
 func main() {
 
-	utils.GetConfigFromFiles("config.txt")
+	utils.UpdateConfig("config.txt")
 
 	coffee := f.Food{0, 0, f.Drinks, "Coffee", 60.0}
-	fmt.Println(coffee.String())
+	fmt.Println(coffee)
 
 	pizza := f.Food{1, 0, f.Foods, "Pizza", 300}
 	pizzaObj := f.CreateFood([]byte(pizza.String()))
-	fmt.Println(pizzaObj.String())
+	fmt.Println(pizzaObj)
 }
