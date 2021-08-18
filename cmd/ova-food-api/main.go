@@ -1,20 +1,23 @@
 package main
 
 import (
-	"fmt"
+	"github.com/ozonva/ova-food-api/internal/flusher"
+	"github.com/ozonva/ova-food-api/internal/repo"
 
-	"github.com/ozonva/ova-food-api/internal/utils"
 	f "github.com/ozonva/ova-food-api/pkg/food"
 )
 
 func main() {
 
-	utils.UpdateConfig("config.txt")
+	coffee := f.Food{Id: 0, UserId: 0, Type: f.Drinks, Name: "Coffee", PortionSize: 60}
+	pizza := f.Food{Id: 1, UserId: 0, Type: f.Foods, Name: "Pizza", PortionSize: 300}
+	tea := f.Food{Id: 2, UserId: 1, Type: f.Drinks, Name: "Tea", PortionSize: 100}
+	bounty := f.Food{Id: 3, UserId: 2, Type: f.Foods, Name: "Bounty", PortionSize: 100}
+	cola := f.Food{Id: 4, UserId: 3, Type: f.Drinks, Name: "Cola", PortionSize: 200}
+	slice := []f.Food{coffee, pizza, tea, bounty, cola}
 
-	coffee := f.Food{0, 0, f.Drinks, "Coffee", 60.0}
-	fmt.Println(coffee)
+	foodRepo := repo.NewRepo("repoFile.txt")
+	fl := flusher.NewFlusher(3, foodRepo)
+	fl.Flush(slice)
 
-	pizza := f.Food{1, 0, f.Foods, "Pizza", 300}
-	pizzaObj := f.CreateFood([]byte(pizza.String()))
-	fmt.Println(pizzaObj)
 }
