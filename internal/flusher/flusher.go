@@ -13,7 +13,7 @@ type flusher struct {
 
 func (f *flusher) Flush(foodsIn []food.Food) []food.Food {
 	splittedFoods := utils.SplitToBulks(foodsIn, f.chunkSize)
-	errFoods := make([]food.Food, 0)
+	var errFoods []food.Food
 	for _, foodSlice := range splittedFoods {
 		err := f.foodRepo.AddEntities(foodSlice)
 		if err != nil {

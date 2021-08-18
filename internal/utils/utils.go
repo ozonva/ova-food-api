@@ -28,7 +28,9 @@ func SliceToChanks(sliceIn []int, chankSize int) [][]int {
 }
 
 func SplitToBulks(sliceIn []f.Food, chankSize int) [][]f.Food {
-	if sliceIn == nil || chankSize >= len(sliceIn) || chankSize < 1 {
+	if sliceIn == nil || chankSize < 1 {
+		return nil
+	} else if chankSize >= len(sliceIn) {
 		res := make([][]f.Food, 1)
 		res[0] = sliceIn
 		return res

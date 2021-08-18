@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/ozonva/ova-food-api/internal/flusher"
 	"github.com/ozonva/ova-food-api/internal/repo"
-
 	f "github.com/ozonva/ova-food-api/pkg/food"
 )
 
@@ -17,6 +16,7 @@ func main() {
 	slice := []f.Food{coffee, pizza, tea, bounty, cola}
 
 	foodRepo := repo.NewRepo("repoFile.txt")
+	//foodRepo := mocks.NewMockRepo()
 	fl := flusher.NewFlusher(3, foodRepo)
 	fl.Flush(slice)
 
