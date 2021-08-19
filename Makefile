@@ -8,4 +8,4 @@ run:
 
 test:
 	go test ./internal/utils -cover
-	ginkgo ./internal/flusher ...
+	go test ./internal/flusher -cover
