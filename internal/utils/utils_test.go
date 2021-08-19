@@ -38,7 +38,7 @@ func TestSplitToBulks(t *testing.T) {
 		chSize         int
 		expextedChanks [][]food.Food
 	}{
-		{0, [][]food.Food{slice}},
+		{0, nil},
 		{1, [][]food.Food{{coffee}, {pizza}, {tea}, {bounty}, {cola}}},
 		{2, [][]food.Food{{coffee, pizza}, {tea, bounty}, {cola}}},
 		{3, [][]food.Food{{coffee, pizza, tea}, {bounty, cola}}},
