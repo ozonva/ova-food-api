@@ -16,7 +16,6 @@ func main() {
 	slice := []f.Food{coffee, pizza, tea, bounty, cola}
 
 	foodRepo := repo.NewRepo("repoFile.txt")
-	//foodRepo := mocks.NewMockRepo()
 	fl := flusher.NewFlusher(3, foodRepo)
 	fl.Flush(slice)
 

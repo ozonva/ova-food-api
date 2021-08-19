@@ -1,6 +1,8 @@
 package flusher_test
 
 import (
+	"errors"
+
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
@@ -15,21 +17,20 @@ var _ = Describe("Flusher", func() {
 		pizza  = f.Food{Id: 1, UserId: 0, Type: f.Foods, Name: "Pizza", PortionSize: 300}
 		slice  = []f.Food{coffee, pizza}
 
-		err       error
 		chunkSize int
 		ctrl      *gomock.Controller
 		mockRepo  *mocks.MockRepo
 		flush     flusher.Flusher
+		result    []f.Food
 	)
 
 	BeforeEach(func() {
 		ctrl = gomock.NewController(GinkgoT())
 		mockRepo = mocks.NewMockRepo(ctrl)
-
 	})
 	JustBeforeEach(func() {
 		flush = flusher.NewFlusher(chunkSize, mockRepo)
-		flush.Flush(slice)
+		result = flush.Flush(slice)
 	})
 	AfterEach(func() {
 		ctrl.Finish()
@@ -42,7 +43,7 @@ var _ = Describe("Flusher", func() {
 			mockRepo.EXPECT().AddEntities([]f.Food{pizza}).Return(nil).Times(1)
 		})
 		It("repo save foods, chunks less slice", func() {
-			gomega.Expect(err).Should(gomega.BeNil())
+			gomega.Expect(result).Should(gomega.BeNil())
 		})
 	})
 
@@ -52,18 +53,28 @@ var _ = Describe("Flusher", func() {
 			mockRepo.EXPECT().AddEntities(gomock.Any()).Return(nil).Times(1)
 		})
 		It("repo save foods, chunks more slice", func() {
-			gomega.Expect(err).Should(gomega.BeNil())
+			gomega.Expect(result).Should(gomega.BeNil())
 		})
 	})
-	/*
-		Context("repo not save foods, nil slice", func() {
-			BeforeEach(func() {
-				chunkSize = 4
-				slice = nil //[]f.Food{{}, {}}
-				mockRepo.EXPECT().AddEntities(gomock.Any()).Return().Times(0)
-			})
-			It("repo not save foods, nil slice", func() {
-				gomega.Expect(err).Should(gomega.BeNil())
-			})
-		})*/
+
+	Context("repo not save foods, nil slice", func() {
+		BeforeEach(func() {
+			chunkSize = 4
+			slice = nil
+			mockRepo.EXPECT().AddEntities(gomock.Any()).Times(0)
+		})
+		It("repo not save foods, nil slice", func() {
+			gomega.Expect(result).Should(gomega.BeNil())
+		})
+	})
+	Context("repo not save foods, internal errors", func() {
+		BeforeEach(func() {
+			chunkSize = 2
+			slice = []f.Food{coffee, pizza}
+			mockRepo.EXPECT().AddEntities(gomock.Any()).Return(errors.New("some internal error")).Times(1)
+		})
+		It("repo not save foods, internal errors", func() {
+			gomega.Expect(result).Should(gomega.BeEquivalentTo(slice))
+		})
+	})
 })
