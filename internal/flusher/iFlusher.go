@@ -1,8 +1,8 @@
 package flusher
 
 import (
+	food "github.com/ozonva/ova-food-api/internal/food"
 	"github.com/ozonva/ova-food-api/internal/repo"
-	food "github.com/ozonva/ova-food-api/pkg/food"
 )
 
 // Flusher - интерфейс для сброса задач в хранилище

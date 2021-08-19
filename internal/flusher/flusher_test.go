@@ -3,25 +3,26 @@ package flusher_test
 import (
 	"errors"
 
+	"github.com/ozonva/ova-food-api/internal/food"
+
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 	"github.com/ozonva/ova-food-api/internal/flusher"
 	"github.com/ozonva/ova-food-api/internal/mocks"
-	f "github.com/ozonva/ova-food-api/pkg/food"
 )
 
 var _ = Describe("Flusher", func() {
 	var (
-		coffee = f.Food{Id: 0, UserId: 0, Type: f.Drinks, Name: "Coffee", PortionSize: 60}
-		pizza  = f.Food{Id: 1, UserId: 0, Type: f.Foods, Name: "Pizza", PortionSize: 300}
-		slice  = []f.Food{coffee, pizza}
+		coffee = food.Food{Id: 0, UserId: 0, Type: food.Drinks, Name: "Coffee", PortionSize: 60}
+		pizza  = food.Food{Id: 1, UserId: 0, Type: food.Foods, Name: "Pizza", PortionSize: 300}
+		slice  = []food.Food{coffee, pizza}
 
 		chunkSize int
 		ctrl      *gomock.Controller
 		mockRepo  *mocks.MockRepo
 		flush     flusher.Flusher
-		result    []f.Food
+		result    []food.Food
 	)
 
 	BeforeEach(func() {
@@ -39,8 +40,8 @@ var _ = Describe("Flusher", func() {
 	Context("repo save foods, chunks less slice", func() {
 		BeforeEach(func() {
 			chunkSize = 1
-			mockRepo.EXPECT().AddEntities([]f.Food{coffee}).Return(nil).Times(1)
-			mockRepo.EXPECT().AddEntities([]f.Food{pizza}).Return(nil).Times(1)
+			mockRepo.EXPECT().AddEntities([]food.Food{coffee}).Return(nil).Times(1)
+			mockRepo.EXPECT().AddEntities([]food.Food{pizza}).Return(nil).Times(1)
 		})
 		It("repo save foods, chunks less slice", func() {
 			gomega.Expect(result).Should(gomega.BeNil())
@@ -70,7 +71,7 @@ var _ = Describe("Flusher", func() {
 	Context("repo not save foods, internal errors", func() {
 		BeforeEach(func() {
 			chunkSize = 2
-			slice = []f.Food{coffee, pizza}
+			slice = []food.Food{coffee, pizza}
 			mockRepo.EXPECT().AddEntities(gomock.Any()).Return(errors.New("some internal error")).Times(1)
 		})
 		It("repo not save foods, internal errors", func() {

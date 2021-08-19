@@ -1,9 +1,9 @@
 package flusher
 
 import (
+	food "github.com/ozonva/ova-food-api/internal/food"
 	"github.com/ozonva/ova-food-api/internal/repo"
 	"github.com/ozonva/ova-food-api/internal/utils"
-	food "github.com/ozonva/ova-food-api/pkg/food"
 )
 
 type flusher struct {

@@ -3,7 +3,7 @@ package repo
 import (
 	"os"
 
-	f "github.com/ozonva/ova-food-api/pkg/food"
+	"github.com/ozonva/ova-food-api/internal/food"
 )
 
 type repoFile struct {
@@ -20,7 +20,7 @@ func (r *repoFile) UpdateFile(data string) error {
 	file.WriteString("\n")
 	return nil
 }
-func (r *repoFile) AddEntities(entities []f.Food) error {
+func (r *repoFile) AddEntities(entities []food.Food) error {
 	var runes []rune
 	for _, en := range entities {
 		runes = append(runes, []rune(en.String())...)
@@ -31,9 +31,9 @@ func (r *repoFile) AddEntities(entities []f.Food) error {
 	}
 	return nil
 }
-func (r *repoFile) ListEntities(limit, offset uint64) ([]f.Food, error) {
+func (r *repoFile) ListEntities(limit, offset uint64) ([]food.Food, error) {
 	return nil, nil
 }
-func (r *repoFile) DescribeEntity(entityId uint64) (*f.Food, error) {
+func (r *repoFile) DescribeEntity(entityId uint64) (*food.Food, error) {
 	return nil, nil
 }

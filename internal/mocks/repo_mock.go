@@ -8,7 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	food "github.com/ozonva/ova-food-api/pkg/food"
+	food "github.com/ozonva/ova-food-api/internal/food"
 )
 
 // MockRepo is a mock of Repo interface.
