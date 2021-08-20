@@ -4,7 +4,7 @@ import (
 	"errors"
 	"math"
 
-	f "github.com/ozonva/ova-food-api/pkg/food"
+	"github.com/ozonva/ova-food-api/internal/food"
 )
 
 func SliceToChanks(sliceIn []int, chankSize int) [][]int {
@@ -27,19 +27,21 @@ func SliceToChanks(sliceIn []int, chankSize int) [][]int {
 	}
 }
 
-func SplitToBulks(sliceIn []f.Food, chankSize int) [][]f.Food {
-	if sliceIn == nil || chankSize >= len(sliceIn) || chankSize < 1 {
-		res := make([][]f.Food, 1)
+func SplitToBulks(sliceIn []food.Food, chankSize int) [][]food.Food {
+	if sliceIn == nil || chankSize < 1 {
+		return nil
+	} else if chankSize >= len(sliceIn) {
+		res := make([][]food.Food, 1)
 		res[0] = sliceIn
 		return res
 	} else {
 		numChanks := int(math.Ceil(float64(len(sliceIn)) / float64(chankSize)))
-		res := make([][]f.Food, numChanks)
+		res := make([][]food.Food, numChanks)
 		k := -1
 		for i := 0; i < len(sliceIn); i++ {
 			if i%chankSize == 0 {
 				k++
-				res[k] = make([]f.Food, 0)
+				res[k] = make([]food.Food, 0)
 			}
 			res[k] = append(res[k], sliceIn[i])
 		}
@@ -47,8 +49,8 @@ func SplitToBulks(sliceIn []f.Food, chankSize int) [][]f.Food {
 	}
 }
 
-func FoodsToMap(foods []f.Food) (map[uint64]f.Food, error) {
-	res := make(map[uint64]f.Food)
+func FoodsToMap(foods []food.Food) (map[uint64]food.Food, error) {
+	res := make(map[uint64]food.Food)
 	for _, elem := range foods {
 		if _, ok := res[elem.Id]; ok {
 			return nil, errors.New("cant create map, not uniq id at foods")

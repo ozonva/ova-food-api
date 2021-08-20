@@ -8,3 +8,4 @@ run:
 
 test:
 	go test ./internal/utils -cover
+	go test ./internal/flusher -cover
