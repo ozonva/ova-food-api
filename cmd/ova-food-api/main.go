@@ -21,6 +21,7 @@ func main() {
 	foodRepo := repo.NewRepo("repoFile.txt")
 	fl := flusher.NewFlusher(2, foodRepo)
 	saver := saver.NewSaver(2, fl)
+	saver.Init()
 
 	saver.Save(coffee)
 	time.Sleep(1500 * time.Millisecond)

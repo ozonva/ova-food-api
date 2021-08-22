@@ -17,6 +17,5 @@ func NewSaver(capacity uint, flusher flusher.Flusher) Saver {
 		flusher: flusher,
 		data:    make([]food.Food, 0, capacity),
 	}
-	s.Init()
 	return s
 }
