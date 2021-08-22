@@ -23,7 +23,7 @@ func (s *saver) Save(food food.Food) {
 }
 
 func (s *saver) Init() {
-	s.initTimerSaver(1 * time.Second) //250 * time.Millisecond)
+	s.initTimerSaver(time.Second)
 	s.stop = make(chan struct{})
 }
 
