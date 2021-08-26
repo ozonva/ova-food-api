@@ -24,7 +24,7 @@ type OvaFoodApiClient interface {
 	// Возвращает опимание сущности пищи по её Id
 	DescribeFoodV1(ctx context.Context, in *DescribeFoodV1Request, opts ...grpc.CallOption) (*DescribeFoodV1Response, error)
 	//Возвращает лист хранимых сущностей пищи по списку ids
-	ListEntities(ctx context.Context, in *ListEntitiesV1Request, opts ...grpc.CallOption) (*ListEntitiesV1Response, error)
+	ListFoods(ctx context.Context, in *ListFoodsV1Request, opts ...grpc.CallOption) (*ListFoodsV1Response, error)
 	//Удаляет сущность пищи по её Id
 	RemoveFoodV1(ctx context.Context, in *RemoveFoodV1Request, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
@@ -55,9 +55,9 @@ func (c *ovaFoodApiClient) DescribeFoodV1(ctx context.Context, in *DescribeFoodV
 	return out, nil
 }
 
-func (c *ovaFoodApiClient) ListEntities(ctx context.Context, in *ListEntitiesV1Request, opts ...grpc.CallOption) (*ListEntitiesV1Response, error) {
-	out := new(ListEntitiesV1Response)
-	err := c.cc.Invoke(ctx, "/ova.food.api.OvaFoodApi/ListEntities", in, out, opts...)
+func (c *ovaFoodApiClient) ListFoods(ctx context.Context, in *ListFoodsV1Request, opts ...grpc.CallOption) (*ListFoodsV1Response, error) {
+	out := new(ListFoodsV1Response)
+	err := c.cc.Invoke(ctx, "/ova.food.api.OvaFoodApi/ListFoods", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ type OvaFoodApiServer interface {
 	// Возвращает опимание сущности пищи по её Id
 	DescribeFoodV1(context.Context, *DescribeFoodV1Request) (*DescribeFoodV1Response, error)
 	//Возвращает лист хранимых сущностей пищи по списку ids
-	ListEntities(context.Context, *ListEntitiesV1Request) (*ListEntitiesV1Response, error)
+	ListFoods(context.Context, *ListFoodsV1Request) (*ListFoodsV1Response, error)
 	//Удаляет сущность пищи по её Id
 	RemoveFoodV1(context.Context, *RemoveFoodV1Request) (*emptypb.Empty, error)
 	mustEmbedUnimplementedOvaFoodApiServer()
@@ -98,8 +98,8 @@ func (UnimplementedOvaFoodApiServer) CreateFoodV1(context.Context, *CreateFoodV1
 func (UnimplementedOvaFoodApiServer) DescribeFoodV1(context.Context, *DescribeFoodV1Request) (*DescribeFoodV1Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DescribeFoodV1 not implemented")
 }
-func (UnimplementedOvaFoodApiServer) ListEntities(context.Context, *ListEntitiesV1Request) (*ListEntitiesV1Response, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListEntities not implemented")
+func (UnimplementedOvaFoodApiServer) ListFoods(context.Context, *ListFoodsV1Request) (*ListFoodsV1Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListFoods not implemented")
 }
 func (UnimplementedOvaFoodApiServer) RemoveFoodV1(context.Context, *RemoveFoodV1Request) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveFoodV1 not implemented")
@@ -153,20 +153,20 @@ func _OvaFoodApi_DescribeFoodV1_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OvaFoodApi_ListEntities_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListEntitiesV1Request)
+func _OvaFoodApi_ListFoods_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFoodsV1Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OvaFoodApiServer).ListEntities(ctx, in)
+		return srv.(OvaFoodApiServer).ListFoods(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ova.food.api.OvaFoodApi/ListEntities",
+		FullMethod: "/ova.food.api.OvaFoodApi/ListFoods",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OvaFoodApiServer).ListEntities(ctx, req.(*ListEntitiesV1Request))
+		return srv.(OvaFoodApiServer).ListFoods(ctx, req.(*ListFoodsV1Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -205,8 +205,8 @@ var OvaFoodApi_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _OvaFoodApi_DescribeFoodV1_Handler,
 		},
 		{
-			MethodName: "ListEntities",
-			Handler:    _OvaFoodApi_ListEntities_Handler,
+			MethodName: "ListFoods",
+			Handler:    _OvaFoodApi_ListFoods_Handler,
 		},
 		{
 			MethodName: "RemoveFoodV1",

@@ -25,7 +25,7 @@ service OvaFoodApi {
 		};
 	}
 	//Возвращает лист хранимых сущностей пищи по списку ids
-	rpc ListEntities(ListEntitiesV1Request) returns (ListEntitiesV1Response) {
+	rpc ListFoods(ListFoodsV1Request) returns (ListFoodsV1Response) {
 		option (google.api.http) = {
 			get: "/v1/foods"
 		};
@@ -48,7 +48,7 @@ message CreationFood {
 	uint64 user_id  	= 2;
 	FoodType food_t 	= 3;
 	string name 		= 4;
-	uint32 portion_size 	= 5;
+	float portion_size 	= 5;
 
 }
 
@@ -57,7 +57,7 @@ message Food {
 	uint64 user_id  	= 2;
 	FoodType food_t 	= 3;
 	string name 		= 4;
-	uint32 portion_size 	= 5;
+	float portion_size 	= 5;
 }
 
 message CreateFoodV1Request {
@@ -72,11 +72,11 @@ message DescribeFoodV1Response {
 	Food food = 1;
 }
 
-message ListEntitiesV1Request {
+message ListFoodsV1Request {
 	repeated uint64 ids = 1;
 }
 
-message ListEntitiesV1Response {
+message ListFoodsV1Response {
 	map<uint64,Food> foods = 1;
 }
 

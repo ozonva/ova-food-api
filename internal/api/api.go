@@ -25,19 +25,18 @@ func (fa *FoodAPI)DescribeFoodV1(ctx context.Context, req *desc.DescribeFoodV1Re
 	coffee := food.Food{Id: foodId, UserId: 0, Type: food.Drinks, Name: "Coffee", PortionSize: 60}
 	log.Info().Msgf("return description of coffee")
 
-	//TODO:PortionSize type change
 	return &desc.DescribeFoodV1Response{
 		Food: &desc.Food{
 			FoodId: coffee.Id,
 			UserId: coffee.UserId,
 			FoodT: desc.FoodType(coffee.Type),
 			Name: coffee.Name,
-			PortionSize: uint32(coffee.PortionSize),
+			PortionSize: coffee.PortionSize,
 		},
 	},nil
 }
-//TODO:ListFoodsV1
-func (fa *FoodAPI)ListEntities(ctx context.Context, req *desc.ListEntitiesV1Request) (*desc.ListEntitiesV1Response, error){
+
+func (fa *FoodAPI)ListFoodsV1(ctx context.Context, req *desc.ListFoodsV1Request) (*desc.ListFoodsV1Response, error){
 	//foodIds :=req.GetIds()
 	coffee := food.Food{Id: 0, UserId: 0, Type: food.Drinks, Name: "Coffee", PortionSize: 60}
 	pizza := food.Food{Id: 1, UserId: 0, Type: food.Foods, Name: "Pizza", PortionSize: 300}
@@ -50,11 +49,11 @@ func (fa *FoodAPI)ListEntities(ctx context.Context, req *desc.ListEntitiesV1Requ
 			UserId: val.UserId,
 			FoodT: desc.FoodType(val.Type),
 			Name: val.Name,
-			PortionSize: uint32(val.PortionSize),
+			PortionSize: val.PortionSize,
 		}
 	}
 	log.Info().Msgf("return description of coffee & pizza")
-	return &desc.ListEntitiesV1Response{Foods: foods},nil
+	return &desc.ListFoodsV1Response{Foods: foods},nil
 }
 
 func (fa *FoodAPI)RemoveFoodV1(ctx context.Context,req *desc.RemoveFoodV1Request) (*emptypb.Empty,error){
