@@ -2,10 +2,11 @@ package api
 
 import (
 	"context"
-	"github.com/ozonva/ova-food-api/internal/food"
-	desc "github.com/ozonva/ova-food-api/pkg/ova-food-api"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	"github.com/ozonva/ova-food-api/internal/food"
+	desc "github.com/ozonva/ova-food-api/pkg/ova-food-api"
 )
 
 type FoodAPI struct {
