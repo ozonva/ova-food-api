@@ -25,7 +25,7 @@ service OvaFoodApi {
 		};
 	}
 	//Возвращает лист хранимых сущностей пищи по списку ids
-	rpc ListFoods(ListFoodsV1Request) returns (ListFoodsV1Response) {
+	rpc ListFoodsV1(ListFoodsV1Request) returns (ListFoodsV1Response) {
 		option (google.api.http) = {
 			get: "/v1/foods"
 		};
