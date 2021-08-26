@@ -16,6 +16,9 @@ jobs:
       with:
         go-version: 1.16
 
+    - name: Deps
+      run: make install-deps
+      
     - name: Build
       run: make build
 
