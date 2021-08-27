@@ -3,13 +3,16 @@ build: .vendor-proto .proto-generate .build
 
 .PHONY: .proto-generate
 .proto-generate:
+	mkdir -p swagger
 	mkdir -p pkg/ova-food-api
-	protoc -I vendor.protogen \
+	PATH="${PATH}:${HOME}/go/bin" protoc -I vendor.protogen \
 		--go_out=pkg/ova-food-api --go_opt=paths=import \
 		--go-grpc_out=pkg/ova-food-api --go-grpc_opt=paths=import \
 		--grpc-gateway_out=pkg/ova-food-api \
 		--grpc-gateway_opt=logtostderr=true \
 		--grpc-gateway_opt=paths=import \
+		--validate_out lang=go:pkg/ova-food-api \
+		--swagger_out=allow_merge=true,merge_file_name=api:swagger \
 		api/ova-food-api/ova-food-api.proto
 	mv pkg/ova-food-api/github.com/ozonva/ova-food-api/pkg/ova-food-api/* pkg/ova-food-api/
 	rm -rf pkg/ova-food-api/github.com
@@ -18,13 +21,13 @@ build: .vendor-proto .proto-generate .build
 .PHONY: install-deps
 install-deps:
 	ls go.mod || go mod init
-	go get -u github.com/grpc-ecosystem/grpc-gateway
-	go get -u github.com/golang/protobuf/proto
-	go get -u github.com/golang/protobuf/protoc-gen-go
-	go get -u google.golang.org/grpc
-	go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc
-	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
-	go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
+	GOBIN=$(LOCAL_BIN) go get -u github.com/grpc-ecosystem/grpc-gateway
+	GOBIN=$(LOCAL_BIN) go get -u github.com/golang/protobuf/proto
+	GOBIN=$(LOCAL_BIN) go get -u github.com/golang/protobuf/protoc-gen-go
+	GOBIN=$(LOCAL_BIN) go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
+	GOBIN=$(LOCAL_BIN) go install github.com/golang/protobuf/protoc-gen-go
+	GOBIN=$(LOCAL_BIN) go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
+	GOBIN=$(LOCAL_BIN)install github.com/envoyproxy/protoc-gen-validate
 
 .PHONY: .vendor-proto
 .vendor-proto:
@@ -42,6 +45,12 @@ install-deps:
 	        mkdir -p  vendor.protogen/google/protobuf &&\
 	        mv vendor.protogen/protobuf/src/google/protobuf/*.proto vendor.protogen/google/protobuf &&\
 		rm -rf vendor.protogen/protobuf ;\
+	fi
+	@if [ ! -d vendor.protogen/github.com/envoyproxy ]; then \
+		mkdir -p vendor.protogen/validate &&\
+		git clone https://github.com/envoyproxy/protoc-gen-validate vendor.protogen/protoc-gen-validate &&\
+		mv vendor.protogen/protoc-gen-validate/validate/*.proto vendor.protogen/validate &&\
+		rm -rf vendor.protogen/protoc-gen-validate ;\
 	fi
 
 .PHONY: run

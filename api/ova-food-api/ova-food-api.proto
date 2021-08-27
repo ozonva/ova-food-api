@@ -2,6 +2,7 @@ syntax = "proto3";
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
+import "validate/validate.proto";
 
 package ova.food.api;
 
@@ -45,27 +46,33 @@ enum FoodType {
 }
 
 message CreationFood {
-	uint64 user_id  	= 2;
-	FoodType food_t 	= 3;
-	string name 		= 4;
-	float portion_size 	= 5;
+	uint64 user_id  	= 2 [(validate.rules).uint64.gte = 0];
+	FoodType food_t 	= 3 [(validate.rules).enum.defined_only = true];
+	string name 		= 4 [(validate.rules).string = {
+                      			pattern:   "^[^[0-9]A-Za-z]+( [^[0-9]A-Za-z]+)*$",
+                      			max_bytes: 256,
+                   		    }];
+	float portion_size 	= 5 [(validate.rules).uint64.gte = 0];
 
 }
 
 message Food {
-	uint64 food_id  	= 1;
-	uint64 user_id  	= 2;
-	FoodType food_t 	= 3;
-	string name 		= 4;
-	float portion_size 	= 5;
+	uint64 food_id  	= 1 [(validate.rules).uint64.gte = 0];
+	uint64 user_id  	= 2 [(validate.rules).uint64.gte = 0];
+	FoodType food_t 	= 3 [(validate.rules).enum.defined_only = true];
+	string name 		= 4 [(validate.rules).string = {
+                      			pattern:   "^[^[0-9]A-Za-z]+( [^[0-9]A-Za-z]+)*$",
+                      			max_bytes: 256,
+                   		    }];
+	float portion_size 	= 5 [(validate.rules).uint64.gte = 0];
 }
 
 message CreateFoodV1Request {
-	CreationFood food = 1;
+	CreationFood food = 1 [(validate.rules).message.required = true];
 }
 
 message DescribeFoodV1Request {
-	uint64 food_id = 1;
+	uint64 food_id = 1 [(validate.rules).uint64.gte = 0];
 }
 
 message DescribeFoodV1Response {
@@ -73,7 +80,7 @@ message DescribeFoodV1Response {
 }
 
 message ListFoodsV1Request {
-	repeated uint64 ids = 1;
+	repeated uint64 ids = 1 [(validate.rules).repeated.items.uint64.gte = 0];
 }
 
 message ListFoodsV1Response {
@@ -81,5 +88,5 @@ message ListFoodsV1Response {
 }
 
 message RemoveFoodV1Request {
-	uint64 food_id = 1;
+	uint64 food_id = 1 [(validate.rules).uint64.gte = 0];
 }

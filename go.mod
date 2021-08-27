@@ -3,9 +3,13 @@ module github.com/ozonva/ova-food-api
 go 1.16
 
 require (
+	github.com/envoyproxy/protoc-gen-validate v0.1.0
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/mock v1.6.0
+	github.com/golang/protobuf v1.5.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0
+	github.com/iancoleman/strcase v0.2.0 // indirect
+	github.com/lyft/protoc-gen-star v0.6.0 // indirect
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.10.1
 	github.com/rs/zerolog v1.23.0
