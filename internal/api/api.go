@@ -52,8 +52,8 @@ func (fa *FoodAPI)ListFoodsV1(ctx context.Context, req *desc.ListFoodsV1Request)
 		log.Fatal().Msgf("input parameter error: %v",err.Error())
 		return nil,status.Error(codes.InvalidArgument, err.Error())
 	}
-	coffee := food.Food{Id: 0, UserId: 0, Type: food.Drinks, Name: "Coffee", PortionSize: 60}
-	pizza := food.Food{Id: 1, UserId: 0, Type: food.Foods, Name: "Pizza", PortionSize: 300}
+	coffee := food.Food{Type: food.Drinks, Name: "Coffee", PortionSize: 60}
+	pizza := food.Food{Id: 1, Type: food.Foods, Name: "Pizza", PortionSize: 300}
 	data := map[uint64]food.Food{coffee.Id:coffee,pizza.Id:pizza}
 	foods := make(map[uint64]*desc.Food)
 
