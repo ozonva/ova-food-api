@@ -57,14 +57,11 @@ message CreationFood {
 }
 
 message Food {
-	uint64 food_id  	= 1 [(validate.rules).uint64.gte = 0];
-	uint64 user_id  	= 2 [(validate.rules).uint64.gte = 0];
-	FoodType food_t 	= 3 [(validate.rules).enum.defined_only = true];
-	string name 		= 4 [(validate.rules).string = {
-                      			pattern:   "^[^[0-9]A-Za-z]+( [^[0-9]A-Za-z]+)*$",
-                      			max_bytes: 256,
-                   		    }];
-	float portion_size 	= 5 [(validate.rules).uint64.gte = 0];
+	uint64 food_id  	= 1 ;
+	uint64 user_id  	= 2 ;
+	FoodType food_t 	= 3 ;
+	string name 		= 4 ;
+	float portion_size 	= 5 ;
 }
 
 message CreateFoodV1Request {

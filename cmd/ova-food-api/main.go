@@ -22,7 +22,7 @@ func main() {
 	}
 	server:= grpc.NewServer()
 	ova_food_api.RegisterOvaFoodApiServer(server,api.NewFoodAPI())
-	//reflection.Register(server)
+	reflection.Register(server)
 	if err := server.Serve(listen); err != nil {
 		log.Fatal().Msgf("failed to serveL %v", err)
 	}

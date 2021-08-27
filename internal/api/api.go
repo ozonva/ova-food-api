@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/ozonva/ova-food-api/internal/food"
@@ -18,10 +20,18 @@ func NewFoodAPI() desc.OvaFoodApiServer  {
 }
 
 func (fa *FoodAPI)CreateFoodV1(ctx context.Context, req *desc.CreateFoodV1Request) (*emptypb.Empty,error)  {
+	if err := req.Validate(); err != nil {
+		log.Fatal().Msgf("input parameter error: %v",err.Error())
+		return nil,status.Error(codes.InvalidArgument, err.Error())
+	}
 	log.Info().Msgf("new food created: %v",req.GetFood().String())
 	return &emptypb.Empty{},nil
 }
 func (fa *FoodAPI)DescribeFoodV1(ctx context.Context, req *desc.DescribeFoodV1Request) (*desc.DescribeFoodV1Response, error){
+	if err := req.Validate(); err != nil {
+		log.Fatal().Msgf("input parameter error: %v",err.Error())
+		return nil,status.Error(codes.InvalidArgument, err.Error())
+	}
 	foodId := req.GetFoodId()
 	coffee := food.Food{Id: foodId, UserId: 0, Type: food.Drinks, Name: "Coffee", PortionSize: 60}
 	log.Info().Msgf("return description of coffee")
@@ -38,6 +48,10 @@ func (fa *FoodAPI)DescribeFoodV1(ctx context.Context, req *desc.DescribeFoodV1Re
 }
 
 func (fa *FoodAPI)ListFoodsV1(ctx context.Context, req *desc.ListFoodsV1Request) (*desc.ListFoodsV1Response, error){
+	if err := req.Validate(); err != nil {
+		log.Fatal().Msgf("input parameter error: %v",err.Error())
+		return nil,status.Error(codes.InvalidArgument, err.Error())
+	}
 	//foodIds :=req.GetIds()
 	coffee := food.Food{Id: 0, UserId: 0, Type: food.Drinks, Name: "Coffee", PortionSize: 60}
 	pizza := food.Food{Id: 1, UserId: 0, Type: food.Foods, Name: "Pizza", PortionSize: 300}
@@ -58,6 +72,10 @@ func (fa *FoodAPI)ListFoodsV1(ctx context.Context, req *desc.ListFoodsV1Request)
 }
 
 func (fa *FoodAPI)RemoveFoodV1(ctx context.Context,req *desc.RemoveFoodV1Request) (*emptypb.Empty,error){
+	if err := req.Validate(); err != nil {
+		log.Fatal().Msgf("input parameter error: %v",err.Error())
+		return nil,status.Error(codes.InvalidArgument, err.Error())
+	}
 	log.Info().Msgf("food deleted: %v",req.FoodId)
 	return &emptypb.Empty{},nil
 }
