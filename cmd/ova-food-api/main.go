@@ -12,7 +12,6 @@ import (
 
 const (
 	grpcPort = ":8080"
-	grpcServerEndpoint = "localhost:8080"
 	)
 
 func main() {

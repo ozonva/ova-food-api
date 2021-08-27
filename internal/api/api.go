@@ -24,7 +24,7 @@ func (fa *FoodAPI)CreateFoodV1(ctx context.Context, req *desc.CreateFoodV1Reques
 		log.Fatal().Msgf("input parameter error: %v",err.Error())
 		return nil,status.Error(codes.InvalidArgument, err.Error())
 	}
-	log.Info().Msgf("new food created: %v",req.GetFood().String())
+	log.Info().Msgf("new food created: %s",req.GetFood())
 	return &emptypb.Empty{},nil
 }
 func (fa *FoodAPI)DescribeFoodV1(ctx context.Context, req *desc.DescribeFoodV1Request) (*desc.DescribeFoodV1Response, error){
@@ -33,8 +33,8 @@ func (fa *FoodAPI)DescribeFoodV1(ctx context.Context, req *desc.DescribeFoodV1Re
 		return nil,status.Error(codes.InvalidArgument, err.Error())
 	}
 	foodId := req.GetFoodId()
-	coffee := food.Food{Id: foodId, UserId: 0, Type: food.Drinks, Name: "Coffee", PortionSize: 60}
-	log.Info().Msgf("return description of coffee")
+	coffee := food.Food{Id: foodId, Type: food.Drinks, Name: "Coffee", PortionSize: 60}
+	log.Info().Msg("return description of coffee")
 
 	return &desc.DescribeFoodV1Response{
 		Food: &desc.Food{
@@ -52,7 +52,6 @@ func (fa *FoodAPI)ListFoodsV1(ctx context.Context, req *desc.ListFoodsV1Request)
 		log.Fatal().Msgf("input parameter error: %v",err.Error())
 		return nil,status.Error(codes.InvalidArgument, err.Error())
 	}
-	//foodIds :=req.GetIds()
 	coffee := food.Food{Id: 0, UserId: 0, Type: food.Drinks, Name: "Coffee", PortionSize: 60}
 	pizza := food.Food{Id: 1, UserId: 0, Type: food.Foods, Name: "Pizza", PortionSize: 300}
 	data := map[uint64]food.Food{coffee.Id:coffee,pizza.Id:pizza}
@@ -67,7 +66,7 @@ func (fa *FoodAPI)ListFoodsV1(ctx context.Context, req *desc.ListFoodsV1Request)
 			PortionSize: val.PortionSize,
 		}
 	}
-	log.Info().Msgf("return description of coffee & pizza")
+	log.Info().Msg("return description of coffee & pizza")
 	return &desc.ListFoodsV1Response{Foods: foods},nil
 }
 
