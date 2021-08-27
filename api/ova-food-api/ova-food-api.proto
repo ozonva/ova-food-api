@@ -52,7 +52,7 @@ message CreationFood {
                       			pattern:   "^[^[0-9]A-Za-z]+( [^[0-9]A-Za-z]+)*$",
                       			max_bytes: 256,
                    		    }];
-	float portion_size 	= 5 [(validate.rules).uint64.gte = 0];
+	float portion_size 	= 5 [(validate.rules).float.gte = 0.0];
 
 }
 

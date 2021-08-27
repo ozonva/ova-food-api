@@ -21,13 +21,13 @@ build: .vendor-proto .proto-generate .build
 .PHONY: install-deps
 install-deps:
 	ls go.mod || go mod init
-	GOBIN=$(LOCAL_BIN) go get -u github.com/grpc-ecosystem/grpc-gateway
-	GOBIN=$(LOCAL_BIN) go get -u github.com/golang/protobuf/proto
-	GOBIN=$(LOCAL_BIN) go get -u github.com/golang/protobuf/protoc-gen-go
-	GOBIN=$(LOCAL_BIN) go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
-	GOBIN=$(LOCAL_BIN) go install github.com/golang/protobuf/protoc-gen-go
-	GOBIN=$(LOCAL_BIN) go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
-	GOBIN=$(LOCAL_BIN)install github.com/envoyproxy/protoc-gen-validate
+	go install \
+	    github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway \
+	    github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 \
+	    google.golang.org/protobuf/cmd/protoc-gen-go \
+	    google.golang.org/grpc/cmd/protoc-gen-go-grpc
+	go install github.com/envoyproxy/protoc-gen-validate
+	go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
 
 .PHONY: .vendor-proto
 .vendor-proto:
