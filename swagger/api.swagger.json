@@ -1,0 +1,249 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "api/ova-food-api/ova-food-api.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/foods": {
+      "get": {
+        "summary": "Возвращает лист хранимых сущностей пищи по списку ids",
+        "operationId": "OvaFoodApi_ListFoodsV1",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiListFoodsV1Response"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "OvaFoodApi"
+        ]
+      },
+      "post": {
+        "summary": "Создание сущности",
+        "operationId": "OvaFoodApi_CreateFoodV1",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiCreationFood"
+            }
+          }
+        ],
+        "tags": [
+          "OvaFoodApi"
+        ]
+      }
+    },
+    "/v1/foods/{food_id}": {
+      "get": {
+        "summary": "Возвращает опимание сущности пищи по её Id",
+        "operationId": "OvaFoodApi_DescribeFoodV1",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiDescribeFoodV1Response"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "food_id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "OvaFoodApi"
+        ]
+      },
+      "delete": {
+        "summary": "Удаляет сущность пищи по её Id",
+        "operationId": "OvaFoodApi_RemoveFoodV1",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "food_id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "OvaFoodApi"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "apiCreationFood": {
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "food_t": {
+          "$ref": "#/definitions/apiFoodType"
+        },
+        "name": {
+          "type": "string"
+        },
+        "portion_size": {
+          "type": "number",
+          "format": "float"
+        }
+      }
+    },
+    "apiDescribeFoodV1Response": {
+      "type": "object",
+      "properties": {
+        "food": {
+          "$ref": "#/definitions/apiFood"
+        }
+      }
+    },
+    "apiFood": {
+      "type": "object",
+      "properties": {
+        "food_id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "user_id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "food_t": {
+          "$ref": "#/definitions/apiFoodType"
+        },
+        "name": {
+          "type": "string"
+        },
+        "portion_size": {
+          "type": "number",
+          "format": "float"
+        }
+      }
+    },
+    "apiFoodType": {
+      "type": "string",
+      "enum": [
+        "Unknown",
+        "Drinks",
+        "Foods"
+      ],
+      "default": "Unknown"
+    },
+    "apiListFoodsV1Response": {
+      "type": "object",
+      "properties": {
+        "foods": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/apiFood"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "runtimeError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

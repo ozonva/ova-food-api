@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "validate/validate.proto";
+
+package ova.food.api;
+
+option go_package = "github.com/ozonva/ova-food-api/pkg/ova-food-api;ova_food_api";
+
+
+
+//Сервис для работы с сущностями пищи
+service OvaFoodApi {	
+	// Создание сущности
+	rpc CreateFoodV1(CreateFoodV1Request) returns (google.protobuf.Empty) {
+		option (google.api.http) = {
+			post: "/v1/foods"
+			body: "food"
+		};
+	}
+	// Возвращает опимание сущности пищи по её Id
+	rpc DescribeFoodV1(DescribeFoodV1Request) returns (DescribeFoodV1Response) {
+		option (google.api.http) = {
+			get: "/v1/foods/{food_id}"
+		};
+	}
+	//Возвращает лист хранимых сущностей пищи по списку ids
+	rpc ListFoodsV1(ListFoodsV1Request) returns (ListFoodsV1Response) {
+		option (google.api.http) = {
+			get: "/v1/foods"
+		};
+	}
+	//Удаляет сущность пищи по её Id
+	rpc RemoveFoodV1(RemoveFoodV1Request) returns (google.protobuf.Empty) {
+		option (google.api.http) = {
+			delete: "/v1/foods/{food_id}"
+		};
+	}
+}
+
+enum FoodType {
+	Unknown = 0;
+	Drinks 	= 1;
+	Foods 	= 2;
+}
+
+message CreationFood {
+	uint64 user_id  	= 2 [(validate.rules).uint64.gte = 0];
+	FoodType food_t 	= 3 [(validate.rules).enum.defined_only = true];
+	string name 		= 4 [(validate.rules).string = {
+                      			pattern:   "^[^[0-9]A-Za-z]+( [^[0-9]A-Za-z]+)*$",
+                      			max_bytes: 256,
+                   		    }];
+	float portion_size 	= 5 [(validate.rules).float.gte = 0.0];
+
+}
+
+message Food {
+	uint64 food_id  	= 1 ;
+	uint64 user_id  	= 2 ;
+	FoodType food_t 	= 3 ;
+	string name 		= 4 ;
+	float portion_size 	= 5 ;
+}
+
+message CreateFoodV1Request {
+	CreationFood food = 1 [(validate.rules).message.required = true];
+}
+
+message DescribeFoodV1Request {
+	uint64 food_id = 1 [(validate.rules).uint64.gte = 0];
+}
+
+message DescribeFoodV1Response {
+	Food food = 1;
+}
+
+message ListFoodsV1Request {
+	repeated uint64 ids = 1 [(validate.rules).repeated.items.uint64.gte = 0];
+}
+
+message ListFoodsV1Response {
+	map<uint64,Food> foods = 1;
+}
+
+message RemoveFoodV1Request {
+	uint64 food_id = 1 [(validate.rules).uint64.gte = 0];
+}

@@ -1,35 +1,28 @@
 package main
 
 import (
-	"time"
+	"github.com/rs/zerolog/log"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
+	"net"
 
-	"github.com/ozonva/ova-food-api/internal/flusher"
-	"github.com/ozonva/ova-food-api/internal/food"
-	"github.com/ozonva/ova-food-api/internal/repo"
-	"github.com/ozonva/ova-food-api/internal/saver"
+	"github.com/ozonva/ova-food-api/internal/api"
+	"github.com/ozonva/ova-food-api/pkg/ova-food-api"
 )
 
+const (
+	grpcPort = ":8080"
+	)
+
 func main() {
-	coffee := food.Food{Id: 0, UserId: 0, Type: food.Drinks, Name: "Coffee", PortionSize: 60}
-	pizza := food.Food{Id: 1, UserId: 0, Type: food.Foods, Name: "Pizza", PortionSize: 300}
-	tea := food.Food{Id: 2, UserId: 1, Type: food.Drinks, Name: "Tea", PortionSize: 100}
-	bounty := food.Food{Id: 3, UserId: 2, Type: food.Foods, Name: "Bounty", PortionSize: 100}
-	cola := food.Food{Id: 4, UserId: 3, Type: food.Drinks, Name: "Cola", PortionSize: 200}
-
-	foodRepo := repo.NewRepo("repoFile.txt")
-	fl := flusher.NewFlusher(2, foodRepo)
-	saver := saver.NewSaver(2, fl)
-	saver.Init()
-
-	saver.Save(coffee)
-	time.Sleep(1500 * time.Millisecond)
-	saver.Save(pizza)
-	saver.Save(cola)
-
-	saver.Save(bounty)
-	saver.Save(tea)
-
-	saver.Save(coffee)
-
-	saver.Close()
+	listen, err := net.Listen("tcp",grpcPort)
+	if err != nil {
+		log.Fatal().Msgf("failed to listen: %v",err)
+	}
+	server:= grpc.NewServer()
+	ova_food_api.RegisterOvaFoodApiServer(server,api.NewFoodAPI())
+	reflection.Register(server)
+	if err := server.Serve(listen); err != nil {
+		log.Fatal().Msgf("failed to serveL %v", err)
+	}
 }
