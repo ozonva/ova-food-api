@@ -5,7 +5,8 @@ import (
 )
 
 const (
-	Drinks = iota
+	Unknown = iota
+	Drinks
 	Foods
 )
 
