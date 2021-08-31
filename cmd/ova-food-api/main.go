@@ -40,7 +40,7 @@ func main() {
 		log.Error().Err(err).Msgf("failed to ping to database")
 	}*/
 	r := repo.NewRepo(*db)
-	f, err := r.DescribeEntity(1)
+	f, err := r.ListEntities(5,1)// DescribeEntity(1)
 	if err != nil {
 		log.Error().Err(err).Msgf("internal error")
 	}
