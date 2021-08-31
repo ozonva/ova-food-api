@@ -77,3 +77,17 @@ func (mr *MockRepoMockRecorder) ListEntities(arg0, arg1 interface{}) *gomock.Cal
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEntities", reflect.TypeOf((*MockRepo)(nil).ListEntities), arg0, arg1)
 }
+
+// RemoveEntity mocks base method.
+func (m *MockRepo) RemoveEntity(arg0 uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveEntity", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveEntity indicates an expected call of RemoveEntity.
+func (mr *MockRepoMockRecorder) RemoveEntity(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveEntity", reflect.TypeOf((*MockRepo)(nil).RemoveEntity), arg0)
+}
