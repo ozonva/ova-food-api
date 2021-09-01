@@ -3,6 +3,7 @@ module github.com/ozonva/ova-food-api
 go 1.16
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
 	github.com/Masterminds/squirrel v1.5.0
 	github.com/cockroachdb/apd v1.1.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v0.1.0

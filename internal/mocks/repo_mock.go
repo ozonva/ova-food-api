@@ -48,6 +48,20 @@ func (mr *MockRepoMockRecorder) AddEntities(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEntities", reflect.TypeOf((*MockRepo)(nil).AddEntities), arg0)
 }
 
+// AddEntity mocks base method.
+func (m *MockRepo) AddEntity(arg0 food.Food) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddEntity", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddEntity indicates an expected call of AddEntity.
+func (mr *MockRepoMockRecorder) AddEntity(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEntity", reflect.TypeOf((*MockRepo)(nil).AddEntity), arg0)
+}
+
 // DescribeEntity mocks base method.
 func (m *MockRepo) DescribeEntity(arg0 uint64) (*food.Food, error) {
 	m.ctrl.T.Helper()
