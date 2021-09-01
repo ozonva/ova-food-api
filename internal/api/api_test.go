@@ -51,18 +51,40 @@ var _ = Describe("Api", func() {
 		BeforeEach(func() {
 		})
 		It("add coffee", func() {
+			req := &desc.CreateFoodV1Request{
+				Food: &desc.CreationFood{
+					UserId:      coffee.UserId,
+					FoodT:       desc.FoodType(coffee.Type),
+					Name:        coffee.Name,
+					PortionSize: coffee.PortionSize,
+				},
+			}
+			mock.ExpectExec(regexp.QuoteMeta("INSERT INTO food_info (user_id,type,name,portion_size) VALUES ($1,$2,$3,$4)")).
+				WithArgs(coffee.UserId, coffee.Type, coffee.Name, coffee.PortionSize).
+				WillReturnResult(sqlmock.NewResult(0, 1))
 			func() {
-				_, err = apiTest.CreateFoodV1(ctx, &desc.CreateFoodV1Request{
-					Food: &desc.CreationFood{
-						UserId:      coffee.UserId,
-						FoodT:       desc.FoodType(coffee.Type),
-						Name:        coffee.Name,
-						PortionSize: coffee.PortionSize,
-					},
-				})
+				_, err = apiTest.CreateFoodV1(ctx, req)
 			}()
 			gomega.Expect(err).Should(gomega.BeNil())
 		})
+		It("add  - internal error", func() {
+			req := &desc.CreateFoodV1Request{
+				Food: &desc.CreationFood{
+					UserId:      coffee.UserId,
+					FoodT:       desc.FoodType(coffee.Type),
+					Name:        coffee.Name,
+					PortionSize: coffee.PortionSize,
+				},
+			}
+			mock.ExpectExec(regexp.QuoteMeta("INSERT INTO food_info (user_id,type,name,portion_size) VALUES ($1,$2,$3,$4)")).
+				WithArgs(coffee.UserId, coffee.Type, coffee.Name, coffee.PortionSize).
+				WillReturnError(sqlmock.ErrCancelled)
+			func() {
+				_, err = apiTest.CreateFoodV1(ctx, req)
+			}()
+			gomega.Expect(err).ShouldNot(gomega.BeNil())
+		})
+
 	})
 	Context("describe food", func() {
 		BeforeEach(func() {
