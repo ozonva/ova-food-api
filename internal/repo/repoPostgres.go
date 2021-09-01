@@ -30,12 +30,24 @@ func (r *repoPostgres) AddEntities(foods []food.Food) error {
 }
 
 func (r *repoPostgres) AddEntity(food food.Food) error {
-	query, args, err := sq.Insert(table).Columns("user_id", "type", "name", "portion_size").
-		Values(food.UserId, food.Type, food.Name, food.PortionSize).ToSql()
+	query, args, err := sq.Insert(table).
+		Columns("user_id", "type", "name", "portion_size").
+		Values(food.UserId, food.Type, food.Name, food.PortionSize).
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
 	if err != nil {
 		return err
 	}
-	r.db.Exec(query, args)
+	res, err := r.db.Exec(query, args...)
+
+	if err != nil {
+		return err
+	}
+	if ra, rerr := res.RowsAffected(); rerr != nil {
+		return rerr
+	} else if ra < 1 {
+		return HaveNotElementErr
+	}
 	return nil
 }
 

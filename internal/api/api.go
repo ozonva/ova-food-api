@@ -32,9 +32,7 @@ func (fa *FoodAPI) CreateFoodV1(ctx context.Context, req *desc.CreateFoodV1Reque
 		Name:        req.GetFood().Name,
 		UserId:      req.GetFood().UserId,
 		Type:        uint8(req.GetFood().FoodT.Number()),
-		PortionSize: req.GetFood().PortionSize,
-	},
-	)
+		PortionSize: req.GetFood().PortionSize})
 	if err != nil {
 		log.Warn().Msgf("internal database error: %v", err.Error())
 		return nil, status.Error(codes.Internal, err.Error())
