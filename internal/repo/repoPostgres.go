@@ -50,16 +50,11 @@ func (r *repoPostgres) AddEntity(ctx context.Context, food food.Food) error {
 	if err != nil {
 		return err
 	}
-	res, err := r.db.ExecContext(ctx, query, args...)
-
+	_, err = r.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return err
 	}
-	if ra, rerr := res.RowsAffected(); rerr != nil {
-		return rerr
-	} else if ra < 1 {
-		return HaveNotElementErr
-	}
+
 	return nil
 }
 func (r *repoPostgres) ListEntities(ctx context.Context, limit, offset uint64) ([]food.Food, error) {
@@ -76,18 +71,16 @@ func (r *repoPostgres) ListEntities(ctx context.Context, limit, offset uint64) (
 		return nil, err
 	}
 	sliceFoods := []food.Food{}
+	defer rows.Close()
 	for rows.Next() {
 		tmpFood := food.Food{}
 		err = rows.Scan(&tmpFood.Id, &tmpFood.UserId, &tmpFood.Type, &tmpFood.Name, &tmpFood.PortionSize)
 		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, HaveNotElementErr
-			}
 			return nil, err
 		}
 		sliceFoods = append(sliceFoods, tmpFood)
 	}
-	return sliceFoods, nil
+	return sliceFoods, rows.Err()
 }
 func (r *repoPostgres) DescribeEntity(ctx context.Context, foodId uint64) (*food.Food, error) {
 	query, args, err := sq.Select("id", "user_id", "type", "name", "portion_size").
@@ -137,16 +130,12 @@ func (r *repoPostgres) UpdateEntity(ctx context.Context, food food.Food) error {
 	if err != nil {
 		return err
 	}
-	res, err := r.db.ExecContext(ctx, query, args...)
+	_, err = r.db.ExecContext(ctx, query, args...)
 
 	if err != nil {
 		return err
 	}
-	if ra, rerr := res.RowsAffected(); rerr != nil {
-		return rerr
-	} else if ra < 1 {
-		return HaveNotElementErr
-	}
+
 	return nil
 }
 func (r *repoPostgres) MultiAddEntity(ctx context.Context, foods [][]food.Food) error {

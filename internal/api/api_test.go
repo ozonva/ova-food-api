@@ -38,7 +38,7 @@ var _ = Describe("Api", func() {
 		ctx = context.Background()
 		db, mock, err = sqlmock.New()
 		sqlxDB = sqlx.NewDb(db, "sqlmock")
-		repoTest = repo.NewRepo(*sqlxDB)
+		repoTest = repo.NewRepo(sqlxDB)
 	})
 	JustBeforeEach(func() {
 		apiTest = api.NewFoodAPI(repoTest, 1)
@@ -182,16 +182,6 @@ var _ = Describe("Api", func() {
 			gomega.Expect(err).Should(gomega.BeNil())
 		})
 
-		It("wrong id", func() {
-			mock.ExpectExec(regexp.QuoteMeta("DELETE FROM food_info WHERE id = $1")).
-				WithArgs(coffee.Id).WillReturnResult(sqlmock.NewResult(0, 0))
-			func() {
-				_, err = apiTest.RemoveFoodV1(ctx, &desc.RemoveFoodV1Request{
-					FoodId: coffee.Id,
-				})
-			}()
-			gomega.Expect(err).ShouldNot(gomega.BeNil())
-		})
 		It("internal error", func() {
 			mock.ExpectExec(regexp.QuoteMeta("DELETE FROM food_info WHERE id = $1")).
 				WithArgs(coffee.Id).WillReturnError(sqlmock.ErrCancelled)

@@ -19,6 +19,6 @@ type Repo interface {
 	MultiAddEntity(ctx context.Context, foods [][]food.Food) error
 }
 
-func NewRepo(database sqlx.DB) Repo {
-	return &repoPostgres{db: database}
+func NewRepo(database *sqlx.DB) Repo {
+	return &repoPostgres{db: *database}
 }
