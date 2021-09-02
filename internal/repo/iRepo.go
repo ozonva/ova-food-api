@@ -12,6 +12,9 @@ type Repo interface {
 	ListEntities(limit, offset uint64) ([]food.Food, error)
 	DescribeEntity(entityId uint64) (*food.Food, error)
 	RemoveEntity(entityId uint64) error
+
+	UpdateEntity(food food.Food) error
+	MultiAddEntity(foods [][]food.Food) error
 }
 
 func NewRepo(database sqlx.DB) Repo {

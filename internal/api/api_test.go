@@ -40,7 +40,7 @@ var _ = Describe("Api", func() {
 		repoTest = repo.NewRepo(*sqlxDB)
 	})
 	JustBeforeEach(func() {
-		apiTest = api.NewFoodAPI(repoTest)
+		apiTest = api.NewFoodAPI(repoTest, 2)
 	})
 	AfterEach(func() {
 		mock.ExpectClose()

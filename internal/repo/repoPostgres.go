@@ -20,15 +20,27 @@ type repoPostgres struct {
 }
 
 func (r *repoPostgres) AddEntities(foods []food.Food) error {
+	query := sq.Insert(table).
+		Columns("user_id", "type", "name", "portion_size").
+		PlaceholderFormat(sq.Dollar)
 	for _, elem := range foods {
-		err := r.AddEntity(elem)
-		if err != nil {
-			return err
-		}
+		query.Values(elem.UserId, elem.Type, elem.Name, elem.PortionSize)
+	}
+	q, args, err := query.ToSql()
+	if err != nil {
+		return err
+	}
+	res, err := r.db.Exec(q, args...)
+	if err != nil {
+		return err
+	}
+	if ra, rerr := res.RowsAffected(); rerr != nil {
+		return rerr
+	} else if ra < 1 {
+		return HaveNotElementErr
 	}
 	return nil
 }
-
 func (r *repoPostgres) AddEntity(food food.Food) error {
 	query, args, err := sq.Insert(table).
 		Columns("user_id", "type", "name", "portion_size").
@@ -50,7 +62,6 @@ func (r *repoPostgres) AddEntity(food food.Food) error {
 	}
 	return nil
 }
-
 func (r *repoPostgres) ListEntities(limit, offset uint64) ([]food.Food, error) {
 	query, args, err := sq.Select("*").
 		From(table).
@@ -113,6 +124,37 @@ func (r *repoPostgres) RemoveEntity(foodId uint64) error {
 		return rerr
 	} else if ra < 1 {
 		return HaveNotElementErr
+	}
+	return nil
+}
+
+func (r *repoPostgres) UpdateEntity(food food.Food) error {
+	query, args, err := sq.Update(table).
+		SetMap(map[string]interface{}{"id": food.Id, "user_id": food.UserId,
+			"type": food.Type, "name": food.Name, "portion_size": food.PortionSize}).
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
+	if err != nil {
+		return err
+	}
+	res, err := r.db.Exec(query, args...)
+
+	if err != nil {
+		return err
+	}
+	if ra, rerr := res.RowsAffected(); rerr != nil {
+		return rerr
+	} else if ra < 1 {
+		return HaveNotElementErr
+	}
+	return nil
+}
+func (r *repoPostgres) MultiAddEntity(foods [][]food.Food) error {
+	for _, elem := range foods {
+		err := r.AddEntities(elem)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

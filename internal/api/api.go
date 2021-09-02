@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/ozonva/ova-food-api/internal/utils"
+
 	"github.com/ozonva/ova-food-api/internal/repo"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
@@ -16,11 +18,14 @@ import (
 
 type FoodAPI struct {
 	desc.UnimplementedOvaFoodApiServer
-	repo repo.Repo
+	repo      repo.Repo
+	chunkSize int
 }
 
-func NewFoodAPI(r repo.Repo) desc.OvaFoodApiServer {
-	return &FoodAPI{repo: r}
+func NewFoodAPI(r repo.Repo, cs int) desc.OvaFoodApiServer {
+	return &FoodAPI{
+		repo:      r,
+		chunkSize: cs}
 }
 
 func (fa *FoodAPI) CreateFoodV1(ctx context.Context, req *desc.CreateFoodV1Request) (*emptypb.Empty, error) {
@@ -110,5 +115,83 @@ func (fa *FoodAPI) RemoveFoodV1(ctx context.Context, req *desc.RemoveFoodV1Reque
 		return &emptypb.Empty{}, status.Error(codes.Internal, err.Error())
 	}
 	log.Info().Msgf("food deleted: %v", req.FoodId)
+	return &emptypb.Empty{}, nil
+}
+
+func (fa *FoodAPI) MultiCreateFoodsV1(ctx context.Context, req *desc.MultiCreateFoodsV1Request) (*emptypb.Empty, error) {
+	if err := req.Validate(); err != nil {
+		log.Warn().Msgf("input parameter error: %v", err.Error())
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	foodsReq := req.GetFoods()
+	dbFoods := []food.Food{}
+	for _, elem := range foodsReq {
+		dbFoods = append(dbFoods, food.Food{
+			Id:          elem.UserId,
+			UserId:      elem.UserId,
+			Type:        uint8(elem.FoodT),
+			Name:        elem.Name,
+			PortionSize: elem.PortionSize,
+		})
+	}
+	bulks := utils.SplitToBulks(dbFoods, fa.chunkSize)
+	err := fa.repo.MultiAddEntity(bulks)
+	if err != nil {
+		log.Warn().Msgf("internal database error: %v", err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	log.Info().Msgf("new foods(%s) created", cap(req.GetFoods()))
+	return &emptypb.Empty{}, nil
+}
+func (fa *FoodAPI) PageFoods(ctx context.Context, req *desc.PageFoodsV1Request) (*desc.PageFoodsV1Response, error) {
+	if err := req.Validate(); err != nil {
+		log.Warn().Msgf("input parameter error: %v", err.Error())
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	foods := make(map[uint64]*desc.Food)
+	dbFoods := []food.Food{}
+	dbFoods, err := fa.repo.ListEntities(req.GetLimit(), req.GetOffset())
+	if err != nil {
+		if errors.Is(err, repo.HaveNotElementErr) {
+			log.Info().Msgf("internal db error: %v", err.Error())
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		log.Warn().Msgf("internal db error: %v", err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	for _, elem := range dbFoods {
+		foods[elem.Id] = &desc.Food{
+			FoodId:      elem.Id,
+			UserId:      elem.UserId,
+			FoodT:       desc.FoodType(elem.Type),
+			Name:        elem.Name,
+			PortionSize: elem.PortionSize,
+		}
+	}
+
+	log.Info().Msg("return elements description")
+	return &desc.PageFoodsV1Response{Foods: foods}, nil
+}
+func (fa *FoodAPI) UpdateFoodV1(ctx context.Context, req *desc.UpdateFoodV1Request) (*emptypb.Empty, error) {
+	if err := req.Validate(); err != nil {
+		log.Warn().Msgf("input parameter error: %v", err.Error())
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	err := fa.repo.UpdateEntity(food.Food{
+		Id:          req.GetFood().FoodId,
+		Name:        req.GetFood().Name,
+		UserId:      req.GetFood().UserId,
+		Type:        uint8(req.GetFood().FoodT.Number()),
+		PortionSize: req.GetFood().PortionSize})
+	if err != nil {
+		if errors.Is(err, repo.HaveNotElementErr) {
+			log.Info().Msgf("internal db error: %v", err.Error())
+			return &emptypb.Empty{}, status.Error(codes.InvalidArgument, err.Error())
+		}
+		log.Warn().Msgf("internal database error: %v", err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	log.Info().Msgf("food updated: %s", req.GetFood())
 	return &emptypb.Empty{}, nil
 }
