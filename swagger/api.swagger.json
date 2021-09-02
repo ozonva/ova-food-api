@@ -13,13 +13,13 @@
   "paths": {
     "/v1/foods": {
       "get": {
-        "summary": "Возвращает лист хранимых сущностей пищи по списку ids",
-        "operationId": "OvaFoodApi_ListFoodsV1",
+        "summary": "Возвращает страницу хранимых сущностей пищи по limit,offset",
+        "operationId": "OvaFoodApi_PageFoods",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiListFoodsV1Response"
+              "$ref": "#/definitions/apiPageFoodsV1Response"
             }
           },
           "default": {
@@ -31,15 +31,18 @@
         },
         "parameters": [
           {
-            "name": "ids",
+            "name": "limit",
             "in": "query",
             "required": false,
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uint64"
-            },
-            "collectionFormat": "multi"
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -70,6 +73,37 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/apiCreationFood"
+            }
+          }
+        ],
+        "tags": [
+          "OvaFoodApi"
+        ]
+      },
+      "put": {
+        "summary": "Обновляет информацию о сущности пищи",
+        "operationId": "OvaFoodApi_UpdateFoodV1",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiFood"
             }
           }
         ],
@@ -202,6 +236,17 @@
       "default": "Unknown"
     },
     "apiListFoodsV1Response": {
+      "type": "object",
+      "properties": {
+        "foods": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/apiFood"
+          }
+        }
+      }
+    },
+    "apiPageFoodsV1Response": {
       "type": "object",
       "properties": {
         "foods": {

@@ -25,6 +25,10 @@ type OvaFoodApiClient interface {
 	DescribeFoodV1(ctx context.Context, in *DescribeFoodV1Request, opts ...grpc.CallOption) (*DescribeFoodV1Response, error)
 	//Возвращает лист хранимых сущностей пищи по списку ids
 	ListFoodsV1(ctx context.Context, in *ListFoodsV1Request, opts ...grpc.CallOption) (*ListFoodsV1Response, error)
+	//Возвращает страницу хранимых сущностей пищи по limit,offset
+	PageFoods(ctx context.Context, in *PageFoodsV1Request, opts ...grpc.CallOption) (*PageFoodsV1Response, error)
+	//Обновляет информацию о сущности пищи
+	UpdateFoodV1(ctx context.Context, in *UpdateFoodV1Request, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	//Удаляет сущность пищи по её Id
 	RemoveFoodV1(ctx context.Context, in *RemoveFoodV1Request, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
@@ -64,6 +68,24 @@ func (c *ovaFoodApiClient) ListFoodsV1(ctx context.Context, in *ListFoodsV1Reque
 	return out, nil
 }
 
+func (c *ovaFoodApiClient) PageFoods(ctx context.Context, in *PageFoodsV1Request, opts ...grpc.CallOption) (*PageFoodsV1Response, error) {
+	out := new(PageFoodsV1Response)
+	err := c.cc.Invoke(ctx, "/ova.food.api.OvaFoodApi/PageFoods", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ovaFoodApiClient) UpdateFoodV1(ctx context.Context, in *UpdateFoodV1Request, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/ova.food.api.OvaFoodApi/UpdateFoodV1", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *ovaFoodApiClient) RemoveFoodV1(ctx context.Context, in *RemoveFoodV1Request, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/ova.food.api.OvaFoodApi/RemoveFoodV1", in, out, opts...)
@@ -83,6 +105,10 @@ type OvaFoodApiServer interface {
 	DescribeFoodV1(context.Context, *DescribeFoodV1Request) (*DescribeFoodV1Response, error)
 	//Возвращает лист хранимых сущностей пищи по списку ids
 	ListFoodsV1(context.Context, *ListFoodsV1Request) (*ListFoodsV1Response, error)
+	//Возвращает страницу хранимых сущностей пищи по limit,offset
+	PageFoods(context.Context, *PageFoodsV1Request) (*PageFoodsV1Response, error)
+	//Обновляет информацию о сущности пищи
+	UpdateFoodV1(context.Context, *UpdateFoodV1Request) (*emptypb.Empty, error)
 	//Удаляет сущность пищи по её Id
 	RemoveFoodV1(context.Context, *RemoveFoodV1Request) (*emptypb.Empty, error)
 	mustEmbedUnimplementedOvaFoodApiServer()
@@ -100,6 +126,12 @@ func (UnimplementedOvaFoodApiServer) DescribeFoodV1(context.Context, *DescribeFo
 }
 func (UnimplementedOvaFoodApiServer) ListFoodsV1(context.Context, *ListFoodsV1Request) (*ListFoodsV1Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListFoodsV1 not implemented")
+}
+func (UnimplementedOvaFoodApiServer) PageFoods(context.Context, *PageFoodsV1Request) (*PageFoodsV1Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PageFoods not implemented")
+}
+func (UnimplementedOvaFoodApiServer) UpdateFoodV1(context.Context, *UpdateFoodV1Request) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateFoodV1 not implemented")
 }
 func (UnimplementedOvaFoodApiServer) RemoveFoodV1(context.Context, *RemoveFoodV1Request) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveFoodV1 not implemented")
@@ -171,6 +203,42 @@ func _OvaFoodApi_ListFoodsV1_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OvaFoodApi_PageFoods_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PageFoodsV1Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OvaFoodApiServer).PageFoods(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ova.food.api.OvaFoodApi/PageFoods",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OvaFoodApiServer).PageFoods(ctx, req.(*PageFoodsV1Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OvaFoodApi_UpdateFoodV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateFoodV1Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OvaFoodApiServer).UpdateFoodV1(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ova.food.api.OvaFoodApi/UpdateFoodV1",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OvaFoodApiServer).UpdateFoodV1(ctx, req.(*UpdateFoodV1Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _OvaFoodApi_RemoveFoodV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RemoveFoodV1Request)
 	if err := dec(in); err != nil {
@@ -207,6 +275,14 @@ var OvaFoodApi_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListFoodsV1",
 			Handler:    _OvaFoodApi_ListFoodsV1_Handler,
+		},
+		{
+			MethodName: "PageFoods",
+			Handler:    _OvaFoodApi_PageFoods_Handler,
+		},
+		{
+			MethodName: "UpdateFoodV1",
+			Handler:    _OvaFoodApi_UpdateFoodV1_Handler,
 		},
 		{
 			MethodName: "RemoveFoodV1",

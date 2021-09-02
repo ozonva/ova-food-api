@@ -31,6 +31,19 @@ service OvaFoodApi {
 			get: "/v1/foods"
 		};
 	}
+	//Возвращает страницу хранимых сущностей пищи по limit,offset
+	rpc PageFoods(PageFoodsV1Request) returns (PageFoodsV1Response) {
+		option (google.api.http) = {
+			get: "/v1/foods"
+		};
+	}	
+	//Обновляет информацию о сущности пищи
+	rpc UpdateFoodV1(UpdateFoodV1Request) returns (google.protobuf.Empty) {
+		option (google.api.http) = {
+			put: "/v1/foods"
+			body: "food"
+		};
+	}
 	//Удаляет сущность пищи по её Id
 	rpc RemoveFoodV1(RemoveFoodV1Request) returns (google.protobuf.Empty) {
 		option (google.api.http) = {
@@ -57,11 +70,27 @@ message CreationFood {
 }
 
 message Food {
-	uint64 food_id  	= 1 ;
-	uint64 user_id  	= 2 ;
-	FoodType food_t 	= 3 ;
-	string name 		= 4 ;
-	float portion_size 	= 5 ;
+	uint64 food_id  	= 1 [(validate.rules).uint64.gte = 0];
+	uint64 user_id  	= 2 [(validate.rules).uint64.gte = 0];
+	FoodType food_t 	= 3 [(validate.rules).enum.defined_only = true];
+	string name 		= 4 [(validate.rules).string = {
+                      			pattern:   "^[^[0-9]A-Za-z]+( [^[0-9]A-Za-z]+)*$",
+                      			max_bytes: 256,
+                   		    }];
+	float portion_size 	= 5 [(validate.rules).float.gte = 0.0];
+}
+
+message PageFoodsV1Request {
+	uint64 limit 	= 1 [(validate.rules).uint64.gte = 0];
+	uint64 offset	= 2 [(validate.rules).uint64.gte = 0];
+}
+
+message PageFoodsV1Response {
+	map<uint64,Food> foods = 1;
+}
+
+message UpdateFoodV1Request {
+	Food food = 1 [(validate.rules).message.required = true];
 }
 
 message CreateFoodV1Request {

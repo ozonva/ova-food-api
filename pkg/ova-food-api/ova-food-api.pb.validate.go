@@ -180,6 +180,223 @@ var _ interface {
 	ErrorName() string
 } = FoodValidationError{}
 
+// Validate checks the field values on PageFoodsV1Request with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *PageFoodsV1Request) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Limit
+
+	// no validation rules for Offset
+
+	return nil
+}
+
+// PageFoodsV1RequestValidationError is the validation error returned by
+// PageFoodsV1Request.Validate if the designated constraints aren't met.
+type PageFoodsV1RequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PageFoodsV1RequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PageFoodsV1RequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PageFoodsV1RequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PageFoodsV1RequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PageFoodsV1RequestValidationError) ErrorName() string {
+	return "PageFoodsV1RequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PageFoodsV1RequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPageFoodsV1Request.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PageFoodsV1RequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PageFoodsV1RequestValidationError{}
+
+// Validate checks the field values on PageFoodsV1Response with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *PageFoodsV1Response) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Foods
+
+	return nil
+}
+
+// PageFoodsV1ResponseValidationError is the validation error returned by
+// PageFoodsV1Response.Validate if the designated constraints aren't met.
+type PageFoodsV1ResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PageFoodsV1ResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PageFoodsV1ResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PageFoodsV1ResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PageFoodsV1ResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PageFoodsV1ResponseValidationError) ErrorName() string {
+	return "PageFoodsV1ResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PageFoodsV1ResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPageFoodsV1Response.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PageFoodsV1ResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PageFoodsV1ResponseValidationError{}
+
+// Validate checks the field values on UpdateFoodV1Request with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *UpdateFoodV1Request) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if v, ok := interface{}(m.GetFood()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return UpdateFoodV1RequestValidationError{
+				field:  "Food",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// UpdateFoodV1RequestValidationError is the validation error returned by
+// UpdateFoodV1Request.Validate if the designated constraints aren't met.
+type UpdateFoodV1RequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpdateFoodV1RequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpdateFoodV1RequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpdateFoodV1RequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpdateFoodV1RequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpdateFoodV1RequestValidationError) ErrorName() string {
+	return "UpdateFoodV1RequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UpdateFoodV1RequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpdateFoodV1Request.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpdateFoodV1RequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpdateFoodV1RequestValidationError{}
+
 // Validate checks the field values on CreateFoodV1Request with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
