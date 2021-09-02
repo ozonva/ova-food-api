@@ -38,16 +38,11 @@ func (r *repoPostgres) AddEntity(food food.Food) error {
 	if err != nil {
 		return err
 	}
-	res, err := r.db.Exec(query, args...)
-
+	_, err = r.db.Exec(query, args...)
 	if err != nil {
 		return err
 	}
-	if ra, rerr := res.RowsAffected(); rerr != nil {
-		return rerr
-	} else if ra < 1 {
-		return HaveNotElementErr
-	}
+
 	return nil
 }
 
@@ -65,18 +60,16 @@ func (r *repoPostgres) ListEntities(limit, offset uint64) ([]food.Food, error) {
 		return nil, err
 	}
 	sliceFoods := []food.Food{}
+	defer rows.Close()
 	for rows.Next() {
 		tmpFood := food.Food{}
 		err = rows.Scan(&tmpFood.Id, &tmpFood.UserId, &tmpFood.Type, &tmpFood.Name, &tmpFood.PortionSize)
 		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, HaveNotElementErr
-			}
 			return nil, err
 		}
 		sliceFoods = append(sliceFoods, tmpFood)
 	}
-	return sliceFoods, nil
+	return sliceFoods, rows.Err()
 }
 func (r *repoPostgres) DescribeEntity(foodId uint64) (*food.Food, error) {
 	query, args, err := sq.Select("id", "user_id", "type", "name", "portion_size").
@@ -105,14 +98,10 @@ func (r *repoPostgres) RemoveEntity(foodId uint64) error {
 	if err != nil {
 		return err
 	}
-	res, err := r.db.Exec(query, args...)
+	_, err = r.db.Exec(query, args...)
 	if err != nil {
 		return err
 	}
-	if ra, rerr := res.RowsAffected(); rerr != nil {
-		return rerr
-	} else if ra < 1 {
-		return HaveNotElementErr
-	}
+
 	return nil
 }

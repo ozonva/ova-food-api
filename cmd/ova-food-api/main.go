@@ -33,7 +33,7 @@ func main() {
 	}
 	server := grpc.NewServer()
 
-	psqlInfo := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=%v",
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		dbHost, dbPort, dbUser, dbPassword, dbName, dbSslMode)
 	db, err := sqlx.Open(dbDriver, psqlInfo)
 	if err != nil {
@@ -44,7 +44,7 @@ func main() {
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to ping to database")
 	}
-	r := repo.NewRepo(*db)
+	r := repo.NewRepo(db)
 
 	ova_food_api.RegisterOvaFoodApiServer(server, api.NewFoodAPI(r))
 	reflection.Register(server)

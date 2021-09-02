@@ -14,6 +14,6 @@ type Repo interface {
 	RemoveEntity(entityId uint64) error
 }
 
-func NewRepo(database sqlx.DB) Repo {
-	return &repoPostgres{db: database}
+func NewRepo(database *sqlx.DB) Repo {
+	return &repoPostgres{db: *database}
 }
