@@ -33,7 +33,7 @@ func (fa *FoodAPI) CreateFoodV1(ctx context.Context, req *desc.CreateFoodV1Reque
 		log.Warn().Msgf("input parameter error: %v", err.Error())
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	err := fa.repo.AddEntity(food.Food{
+	err := fa.repo.AddEntity(ctx, food.Food{
 		Name:        req.GetFood().Name,
 		UserId:      req.GetFood().UserId,
 		Type:        uint8(req.GetFood().FoodT.Number()),
@@ -51,7 +51,7 @@ func (fa *FoodAPI) DescribeFoodV1(ctx context.Context, req *desc.DescribeFoodV1R
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	foodId := req.GetFoodId()
-	description, err := fa.repo.DescribeEntity(foodId)
+	description, err := fa.repo.DescribeEntity(ctx, foodId)
 	if err != nil {
 		if errors.Is(err, repo.HaveNotElementErr) {
 			log.Info().Msgf("internal db error: %v", err.Error())
@@ -79,7 +79,7 @@ func (fa *FoodAPI) ListFoodsV1(ctx context.Context, req *desc.ListFoodsV1Request
 	foods := make(map[uint64]*desc.Food)
 	ids := req.GetIds()
 	for _, id := range ids {
-		elem, err := fa.repo.DescribeEntity(id)
+		elem, err := fa.repo.DescribeEntity(ctx, id)
 		if err != nil {
 			if errors.Is(err, repo.HaveNotElementErr) {
 				log.Info().Msgf("internal db error: %v", err.Error())
@@ -105,7 +105,7 @@ func (fa *FoodAPI) RemoveFoodV1(ctx context.Context, req *desc.RemoveFoodV1Reque
 		return &emptypb.Empty{}, status.Error(codes.InvalidArgument, err.Error())
 	}
 	id := req.GetFoodId()
-	err := fa.repo.RemoveEntity(id)
+	err := fa.repo.RemoveEntity(ctx, id)
 	if err != nil {
 		if errors.Is(err, repo.HaveNotElementErr) {
 			log.Info().Msgf("internal db error: %v", err.Error())
@@ -135,7 +135,7 @@ func (fa *FoodAPI) MultiCreateFoodsV1(ctx context.Context, req *desc.MultiCreate
 		})
 	}
 	bulks := utils.SplitToBulks(dbFoods, fa.chunkSize)
-	err := fa.repo.MultiAddEntity(bulks)
+	err := fa.repo.MultiAddEntity(ctx, bulks)
 	if err != nil {
 		log.Warn().Msgf("internal database error: %v", err.Error())
 		return nil, status.Error(codes.Internal, err.Error())
@@ -150,7 +150,7 @@ func (fa *FoodAPI) PageFoods(ctx context.Context, req *desc.PageFoodsV1Request) 
 	}
 	foods := make(map[uint64]*desc.Food)
 	dbFoods := []food.Food{}
-	dbFoods, err := fa.repo.ListEntities(req.GetLimit(), req.GetOffset())
+	dbFoods, err := fa.repo.ListEntities(ctx, req.GetLimit(), req.GetOffset())
 	if err != nil {
 		if errors.Is(err, repo.HaveNotElementErr) {
 			log.Info().Msgf("internal db error: %v", err.Error())
@@ -178,7 +178,7 @@ func (fa *FoodAPI) UpdateFoodV1(ctx context.Context, req *desc.UpdateFoodV1Reque
 		log.Warn().Msgf("input parameter error: %v", err.Error())
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	err := fa.repo.UpdateEntity(food.Food{
+	err := fa.repo.UpdateEntity(ctx, food.Food{
 		Id:          req.GetFood().FoodId,
 		Name:        req.GetFood().Name,
 		UserId:      req.GetFood().UserId,
