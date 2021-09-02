@@ -21,6 +21,8 @@ const _ = grpc.SupportPackageIsVersion7
 type OvaFoodApiClient interface {
 	// Создание сущности
 	CreateFoodV1(ctx context.Context, in *CreateFoodV1Request, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	//Множественное  добавление сущностей
+	MultiCreateFoodsV1(ctx context.Context, in *MultiCreateFoodsV1Request, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Возвращает опимание сущности пищи по её Id
 	DescribeFoodV1(ctx context.Context, in *DescribeFoodV1Request, opts ...grpc.CallOption) (*DescribeFoodV1Response, error)
 	//Возвращает лист хранимых сущностей пищи по списку ids
@@ -44,6 +46,15 @@ func NewOvaFoodApiClient(cc grpc.ClientConnInterface) OvaFoodApiClient {
 func (c *ovaFoodApiClient) CreateFoodV1(ctx context.Context, in *CreateFoodV1Request, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/ova.food.api.OvaFoodApi/CreateFoodV1", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ovaFoodApiClient) MultiCreateFoodsV1(ctx context.Context, in *MultiCreateFoodsV1Request, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/ova.food.api.OvaFoodApi/MultiCreateFoodsV1", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -101,6 +112,8 @@ func (c *ovaFoodApiClient) RemoveFoodV1(ctx context.Context, in *RemoveFoodV1Req
 type OvaFoodApiServer interface {
 	// Создание сущности
 	CreateFoodV1(context.Context, *CreateFoodV1Request) (*emptypb.Empty, error)
+	//Множественное  добавление сущностей
+	MultiCreateFoodsV1(context.Context, *MultiCreateFoodsV1Request) (*emptypb.Empty, error)
 	// Возвращает опимание сущности пищи по её Id
 	DescribeFoodV1(context.Context, *DescribeFoodV1Request) (*DescribeFoodV1Response, error)
 	//Возвращает лист хранимых сущностей пищи по списку ids
@@ -120,6 +133,9 @@ type UnimplementedOvaFoodApiServer struct {
 
 func (UnimplementedOvaFoodApiServer) CreateFoodV1(context.Context, *CreateFoodV1Request) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateFoodV1 not implemented")
+}
+func (UnimplementedOvaFoodApiServer) MultiCreateFoodsV1(context.Context, *MultiCreateFoodsV1Request) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MultiCreateFoodsV1 not implemented")
 }
 func (UnimplementedOvaFoodApiServer) DescribeFoodV1(context.Context, *DescribeFoodV1Request) (*DescribeFoodV1Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DescribeFoodV1 not implemented")
@@ -163,6 +179,24 @@ func _OvaFoodApi_CreateFoodV1_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(OvaFoodApiServer).CreateFoodV1(ctx, req.(*CreateFoodV1Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OvaFoodApi_MultiCreateFoodsV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MultiCreateFoodsV1Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OvaFoodApiServer).MultiCreateFoodsV1(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ova.food.api.OvaFoodApi/MultiCreateFoodsV1",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OvaFoodApiServer).MultiCreateFoodsV1(ctx, req.(*MultiCreateFoodsV1Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -267,6 +301,10 @@ var OvaFoodApi_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateFoodV1",
 			Handler:    _OvaFoodApi_CreateFoodV1_Handler,
+		},
+		{
+			MethodName: "MultiCreateFoodsV1",
+			Handler:    _OvaFoodApi_MultiCreateFoodsV1_Handler,
 		},
 		{
 			MethodName: "DescribeFoodV1",

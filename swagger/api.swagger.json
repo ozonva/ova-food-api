@@ -50,8 +50,8 @@
         ]
       },
       "post": {
-        "summary": "Создание сущности",
-        "operationId": "OvaFoodApi_CreateFoodV1",
+        "summary": "Множественное  добавление сущностей",
+        "operationId": "OvaFoodApi_MultiCreateFoodsV1",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -66,16 +66,6 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/apiCreationFood"
-            }
-          }
-        ],
         "tags": [
           "OvaFoodApi"
         ]

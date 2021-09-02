@@ -180,6 +180,88 @@ var _ interface {
 	ErrorName() string
 } = FoodValidationError{}
 
+// Validate checks the field values on MultiCreateFoodsV1Request with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *MultiCreateFoodsV1Request) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	for idx, item := range m.GetFoods() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return MultiCreateFoodsV1RequestValidationError{
+					field:  fmt.Sprintf("Foods[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// MultiCreateFoodsV1RequestValidationError is the validation error returned by
+// MultiCreateFoodsV1Request.Validate if the designated constraints aren't met.
+type MultiCreateFoodsV1RequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MultiCreateFoodsV1RequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MultiCreateFoodsV1RequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MultiCreateFoodsV1RequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MultiCreateFoodsV1RequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MultiCreateFoodsV1RequestValidationError) ErrorName() string {
+	return "MultiCreateFoodsV1RequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e MultiCreateFoodsV1RequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMultiCreateFoodsV1Request.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MultiCreateFoodsV1RequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MultiCreateFoodsV1RequestValidationError{}
+
 // Validate checks the field values on PageFoodsV1Request with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.

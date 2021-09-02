@@ -19,6 +19,12 @@ service OvaFoodApi {
 			body: "food"
 		};
 	}
+	//Множественное  добавление сущностей
+	rpc MultiCreateFoodsV1(MultiCreateFoodsV1Request) returns (google.protobuf.Empty) {
+		option (google.api.http) = {
+			post: "/v1/foods"
+		};
+	}
 	// Возвращает опимание сущности пищи по её Id
 	rpc DescribeFoodV1(DescribeFoodV1Request) returns (DescribeFoodV1Response) {
 		option (google.api.http) = {
@@ -78,6 +84,10 @@ message Food {
                       			max_bytes: 256,
                    		    }];
 	float portion_size 	= 5 [(validate.rules).float.gte = 0.0];
+}
+
+message MultiCreateFoodsV1Request {
+	repeated CreationFood foods = 1 [(validate.rules).repeated.items.message.required = true];
 }
 
 message PageFoodsV1Request {
