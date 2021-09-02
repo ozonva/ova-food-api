@@ -124,7 +124,7 @@ func (fa *FoodAPI) MultiCreateFoodsV1(ctx context.Context, req *desc.MultiCreate
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	foodsReq := req.GetFoods()
-	dbFoods := []food.Food{}
+	dbFoods := make([]food.Food, 0)
 	for _, elem := range foodsReq {
 		dbFoods = append(dbFoods, food.Food{
 			Id:          elem.UserId,
@@ -140,7 +140,7 @@ func (fa *FoodAPI) MultiCreateFoodsV1(ctx context.Context, req *desc.MultiCreate
 		log.Warn().Msgf("internal database error: %v", err.Error())
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	log.Info().Msgf("new foods(%s) created", cap(req.GetFoods()))
+	log.Info().Msgf("new foods(%v) created", cap(req.GetFoods()))
 	return &emptypb.Empty{}, nil
 }
 func (fa *FoodAPI) PageFoods(ctx context.Context, req *desc.PageFoodsV1Request) (*desc.PageFoodsV1Response, error) {

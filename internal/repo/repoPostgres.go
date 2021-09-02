@@ -22,15 +22,14 @@ type repoPostgres struct {
 func (r *repoPostgres) AddEntities(foods []food.Food) error {
 	query := sq.Insert(table).
 		Columns("user_id", "type", "name", "portion_size").
+		RunWith(r.db).
 		PlaceholderFormat(sq.Dollar)
+
 	for _, elem := range foods {
-		query.Values(elem.UserId, elem.Type, elem.Name, elem.PortionSize)
+		query = query.Values(elem.UserId, elem.Type, elem.Name, elem.PortionSize)
 	}
-	q, args, err := query.ToSql()
-	if err != nil {
-		return err
-	}
-	res, err := r.db.Exec(q, args...)
+
+	res, err := query.Exec()
 	if err != nil {
 		return err
 	}

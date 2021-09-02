@@ -31,6 +31,7 @@ var _ = Describe("Api", func() {
 		apiTest   desc.OvaFoodApiServer
 		descrResp *desc.DescribeFoodV1Response
 		listResp  *desc.ListFoodsV1Response
+		pageResp  *desc.PageFoodsV1Response
 	)
 
 	BeforeEach(func() {
@@ -40,7 +41,7 @@ var _ = Describe("Api", func() {
 		repoTest = repo.NewRepo(*sqlxDB)
 	})
 	JustBeforeEach(func() {
-		apiTest = api.NewFoodAPI(repoTest, 2)
+		apiTest = api.NewFoodAPI(repoTest, 1)
 	})
 	AfterEach(func() {
 		mock.ExpectClose()
@@ -200,6 +201,173 @@ var _ = Describe("Api", func() {
 				})
 			}()
 			gomega.Expect(err).ShouldNot(gomega.BeNil())
+		})
+	})
+
+	Context("update food", func() {
+		BeforeEach(func() {
+		})
+		It("update food", func() {
+			req := &desc.UpdateFoodV1Request{
+				Food: &desc.Food{
+					FoodId:      coffee.Id,
+					UserId:      coffee.UserId,
+					FoodT:       desc.FoodType(coffee.Type),
+					Name:        coffee.Name,
+					PortionSize: coffee.PortionSize,
+				},
+			}
+			mock.ExpectExec(regexp.QuoteMeta("UPDATE food_info SET id = $1, name = $2, portion_size = $3, type = $4, user_id = $5")).
+				WithArgs(coffee.Id, coffee.Name, coffee.PortionSize, coffee.Type, coffee.UserId).
+				WillReturnResult(sqlmock.NewResult(0, 1))
+			func() {
+				_, err = apiTest.UpdateFoodV1(ctx, req)
+			}()
+			gomega.Expect(err).Should(gomega.BeNil())
+		})
+		It("wrong id", func() {
+			req := &desc.UpdateFoodV1Request{
+				Food: &desc.Food{
+					FoodId:      coffee.Id,
+					UserId:      coffee.UserId,
+					FoodT:       desc.FoodType(coffee.Type),
+					Name:        coffee.Name,
+					PortionSize: coffee.PortionSize,
+				},
+			}
+			mock.ExpectExec(regexp.QuoteMeta("UPDATE food_info SET id = $1, name = $2, portion_size = $3, type = $4, user_id = $5")).
+				WithArgs(coffee.Id, coffee.Name, coffee.PortionSize, coffee.Type, coffee.UserId).
+				WillReturnResult(sqlmock.NewResult(0, 0))
+			func() {
+				_, err = apiTest.UpdateFoodV1(ctx, req)
+			}()
+			gomega.Expect(err).ShouldNot(gomega.BeNil())
+		})
+		It("wrong id", func() {
+			req := &desc.UpdateFoodV1Request{
+				Food: &desc.Food{
+					FoodId:      coffee.Id,
+					UserId:      coffee.UserId,
+					FoodT:       desc.FoodType(coffee.Type),
+					Name:        coffee.Name,
+					PortionSize: coffee.PortionSize,
+				},
+			}
+			mock.ExpectExec(regexp.QuoteMeta("UPDATE food_info SET id = $1, name = $2, portion_size = $3, type = $4, user_id = $5")).
+				WithArgs(coffee.Id, coffee.Name, coffee.PortionSize, coffee.Type, coffee.UserId).
+				WillReturnError(sqlmock.ErrCancelled)
+			func() {
+				_, err = apiTest.UpdateFoodV1(ctx, req)
+			}()
+			gomega.Expect(err).ShouldNot(gomega.BeNil())
+		})
+
+	})
+	Context("multiadd foods", func() {
+		BeforeEach(func() {
+		})
+		It("multiadd", func() {
+			req := &desc.MultiCreateFoodsV1Request{
+				Foods: []*desc.CreationFood{{
+					UserId:      coffee.UserId,
+					FoodT:       desc.FoodType(coffee.Type),
+					Name:        coffee.Name,
+					PortionSize: coffee.PortionSize,
+				}, {
+					UserId:      pizza.UserId,
+					FoodT:       desc.FoodType(pizza.Type),
+					Name:        pizza.Name,
+					PortionSize: pizza.PortionSize,
+				}},
+			}
+			mock.ExpectExec(regexp.QuoteMeta("INSERT INTO food_info")).
+				WithArgs(coffee.UserId, coffee.Type, coffee.Name, coffee.PortionSize).
+				WillReturnResult(sqlmock.NewResult(2, 1))
+			mock.ExpectExec(regexp.QuoteMeta("INSERT INTO food_info")).
+				WithArgs(pizza.UserId, pizza.Type, pizza.Name, pizza.PortionSize).
+				WillReturnResult(sqlmock.NewResult(2, 1))
+			func() {
+				_, err = apiTest.MultiCreateFoodsV1(ctx, req)
+			}()
+			gomega.Expect(err).Should(gomega.BeNil())
+		})
+		It("multiadd  - internal error", func() {
+			req := &desc.MultiCreateFoodsV1Request{
+				Foods: []*desc.CreationFood{{
+					UserId:      coffee.UserId,
+					FoodT:       desc.FoodType(coffee.Type),
+					Name:        coffee.Name,
+					PortionSize: coffee.PortionSize,
+				}, {
+					UserId:      pizza.UserId,
+					FoodT:       desc.FoodType(pizza.Type),
+					Name:        pizza.Name,
+					PortionSize: pizza.PortionSize,
+				}},
+			}
+			mock.ExpectExec(regexp.QuoteMeta("INSERT INTO food_info")).
+				WithArgs(coffee.UserId, coffee.Type, coffee.Name, coffee.PortionSize).
+				WillReturnResult(sqlmock.NewResult(2, 1))
+			mock.ExpectExec(regexp.QuoteMeta("INSERT INTO food_info")).
+				WithArgs(pizza.UserId, pizza.Type, pizza.Name, pizza.PortionSize).
+				WillReturnError(sqlmock.ErrCancelled)
+			func() {
+				_, err = apiTest.MultiCreateFoodsV1(ctx, req)
+			}()
+			gomega.Expect(err).ShouldNot(gomega.BeNil())
+		})
+		It("multiadd  - internal error", func() {
+			req := &desc.MultiCreateFoodsV1Request{
+				Foods: []*desc.CreationFood{{
+					UserId:      coffee.UserId,
+					FoodT:       desc.FoodType(coffee.Type),
+					Name:        coffee.Name,
+					PortionSize: coffee.PortionSize,
+				}, {
+					UserId:      pizza.UserId,
+					FoodT:       desc.FoodType(pizza.Type),
+					Name:        pizza.Name,
+					PortionSize: pizza.PortionSize,
+				}},
+			}
+			mock.ExpectExec(regexp.QuoteMeta("INSERT INTO food_info")).
+				WithArgs(coffee.UserId, coffee.Type, coffee.Name, coffee.PortionSize).
+				WillReturnResult(sqlmock.NewResult(2, 1))
+			mock.ExpectExec(regexp.QuoteMeta("INSERT INTO food_info")).
+				WithArgs(pizza.UserId, pizza.Type, pizza.Name, pizza.PortionSize).
+				WillReturnResult(sqlmock.NewResult(0, 0))
+			func() {
+				_, err = apiTest.MultiCreateFoodsV1(ctx, req)
+			}()
+			gomega.Expect(err).ShouldNot(gomega.BeNil())
+		})
+	})
+	Context("paging foods", func() {
+		BeforeEach(func() {
+		})
+		It("paging foods", func() {
+			mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM food_info LIMIT 2 OFFSET 0")).
+				WillReturnRows(
+					sqlmock.NewRows([]string{"id", "user_id", "type", "name", "portion_size"}).
+						AddRow(coffee.Id, coffee.UserId, coffee.Type, coffee.Name, coffee.PortionSize).
+						AddRow(pizza.Id, pizza.UserId, pizza.Type, pizza.Name, pizza.PortionSize))
+
+			func() {
+				pageResp, err = apiTest.PageFoods(ctx, &desc.PageFoodsV1Request{
+					Limit: 2, Offset: 0})
+			}()
+			gomega.Expect(err).Should(gomega.BeNil())
+			gomega.Expect(pageResp).ShouldNot(gomega.BeNil())
+		})
+		It("paging foods with internal error", func() {
+			mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM food_info LIMIT 2 OFFSET 0")).
+				WillReturnError(sqlmock.ErrCancelled)
+			func() {
+				pageResp, err = apiTest.PageFoods(ctx, &desc.PageFoodsV1Request{
+					Limit: 2, Offset: 0})
+			}()
+			gomega.Expect(err).ShouldNot(gomega.BeNil())
+			gomega.Expect(pageResp).Should(gomega.BeNil())
 		})
 	})
 })

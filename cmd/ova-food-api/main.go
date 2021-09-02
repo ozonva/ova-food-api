@@ -24,6 +24,8 @@ const (
 	dbName     = "postgres"
 	dbSslMode  = "disable"
 	dbDriver   = "pgx"
+
+	chunkSize = 2
 )
 
 func main() {
@@ -46,7 +48,7 @@ func main() {
 	}
 	r := repo.NewRepo(*db)
 
-	ova_food_api.RegisterOvaFoodApiServer(server, api.NewFoodAPI(r))
+	ova_food_api.RegisterOvaFoodApiServer(server, api.NewFoodAPI(r, chunkSize))
 	reflection.Register(server)
 	if err := server.Serve(listen); err != nil {
 		log.Fatal().Msgf("failed to serveL %v", err)
