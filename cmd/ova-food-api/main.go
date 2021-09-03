@@ -3,8 +3,11 @@ package main
 import (
 	"fmt"
 	"net"
+	"net/http"
 
+	"github.com/ozonva/ova-food-api/internal/metrics"
 	"github.com/ozonva/ova-food-api/internal/tracer"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/ozonva/ova-food-api/internal/Kafka/consumer"
 	"github.com/ozonva/ova-food-api/internal/Kafka/producer"
@@ -23,32 +26,23 @@ import (
 )
 
 const (
-	grpcPort   = ":8080"
-	dbHost     = "localhost"
-	dbPort     = "5432"
-	dbUser     = "postgres"
-	dbPassword = "postgres"
-	dbName     = "postgres"
-	dbSslMode  = "disable"
-	dbDriver   = "pgx"
-	broker     = "127.0.0.1:9092"
-	chunkSize  = 2
-	topic      = "cudFoods-topic"
+	grpcPort    = ":8080"
+	dbHost      = "localhost"
+	dbPort      = "5432"
+	dbUser      = "postgres"
+	dbPassword  = "postgres"
+	dbName      = "postgres"
+	dbSslMode   = "disable"
+	dbDriver    = "pgx"
+	brokerKafka = "127.0.0.1:9092"
+	chunkSize   = 2
+	topic       = "cudFoods-topic"
 )
 
 func main() {
 	tracer.InitTracing("food-api tracer")
-
-	producerEx, err := producer.NewProducer([]string{broker})
-	if err != nil {
-		log.Fatal().Msgf("failed to create producer: %v", err)
-	}
-
-	consumerEx, err := sarama.NewConsumer([]string{broker}, nil)
-	if err != nil {
-		log.Fatal().Msgf("failed to create consumer: %v", err)
-	}
-	consumer.Subscribe(topic, consumerEx)
+	producerEx := initKafka()
+	go initMetrics()
 
 	listen, err := net.Listen("tcp", grpcPort)
 	if err != nil {
@@ -69,9 +63,28 @@ func main() {
 	}
 	r := repo.NewRepo(db)
 
-	ova_food_api.RegisterOvaFoodApiServer(server, api.NewFoodAPI(r, chunkSize, producerEx, topic))
+	ova_food_api.RegisterOvaFoodApiServer(server, api.NewFoodAPI(r, chunkSize, *producerEx, topic))
 	reflection.Register(server)
 	if err := server.Serve(listen); err != nil {
 		log.Fatal().Msgf("failed to serveL %v", err)
 	}
+}
+
+func initKafka() *sarama.SyncProducer {
+	producerEx, err := producer.NewProducer([]string{brokerKafka})
+	if err != nil {
+		log.Fatal().Msgf("failed to create producer: %v", err)
+	}
+
+	consumerEx, err := sarama.NewConsumer([]string{brokerKafka}, nil)
+	if err != nil {
+		log.Fatal().Msgf("failed to create consumer: %v", err)
+	}
+	consumer.Subscribe(topic, consumerEx)
+	return &producerEx
+}
+func initMetrics() {
+	metrics.RegisterMetrics()
+	http.Handle("/metrics", promhttp.Handler())
+	http.ListenAndServe(":2112", nil)
 }

@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ozonva/ova-food-api/internal/metrics"
+
 	"github.com/Shopify/sarama"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
@@ -50,6 +52,9 @@ func (fa *FoodAPI) CreateFoodV1(ctx context.Context, req *desc.CreateFoodV1Reque
 		log.Warn().Msgf("internal database error: %v", err.Error())
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+
+	metrics.CounterIncrement("CREATE")
+
 	msgstr := fmt.Sprintf("new food CREATED: %s", req.GetFood())
 	msg := producer.PrepareMessage(fa.topic, msgstr)
 	partition, offset, err := fa.producer.SendMessage(msg)
@@ -129,6 +134,9 @@ func (fa *FoodAPI) RemoveFoodV1(ctx context.Context, req *desc.RemoveFoodV1Reque
 		log.Warn().Msgf("internal db error: %v", err.Error())
 		return &emptypb.Empty{}, status.Error(codes.Internal, err.Error())
 	}
+
+	metrics.CounterIncrement("DELETE")
+
 	msgstr := fmt.Sprintf("food DELETED: %v", req.FoodId)
 	msg := producer.PrepareMessage(fa.topic, msgstr)
 	partition, offset, err := fa.producer.SendMessage(msg)
@@ -215,6 +223,8 @@ func (fa *FoodAPI) UpdateFoodV1(ctx context.Context, req *desc.UpdateFoodV1Reque
 		log.Warn().Msgf("internal database error: %v", err.Error())
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	metrics.CounterIncrement("UPDATE")
+
 	msgstr := fmt.Sprintf("food UPDATED: %s", req.GetFood())
 	msg := producer.PrepareMessage(fa.topic, msgstr)
 	partition, offset, err := fa.producer.SendMessage(msg)
