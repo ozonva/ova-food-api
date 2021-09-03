@@ -1,0 +1,12 @@
+version: '3.9'
+
+services:
+
+  database:
+    build: ./internal/repo
+    ports:
+      - "5432:5432"
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: postgres
+
