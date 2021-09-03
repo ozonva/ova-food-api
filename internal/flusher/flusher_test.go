@@ -34,7 +34,7 @@ var _ = Describe("Flusher", func() {
 	})
 	JustBeforeEach(func() {
 		flush = flusher.NewFlusher(chunkSize, mockRepo)
-		result = flush.Flush(slice)
+		result = flush.Flush(ctx, slice)
 	})
 	AfterEach(func() {
 		ctrl.Finish()
