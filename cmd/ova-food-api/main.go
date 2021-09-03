@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"net"
 
-	consumer2 "github.com/ozonva/ova-food-api/internal/Kafka/consumer"
-	producer2 "github.com/ozonva/ova-food-api/internal/Kafka/producer"
+	"github.com/ozonva/ova-food-api/internal/tracer"
+
+	"github.com/ozonva/ova-food-api/internal/Kafka/consumer"
+	"github.com/ozonva/ova-food-api/internal/Kafka/producer"
 
 	"github.com/Shopify/sarama"
 
@@ -35,7 +37,9 @@ const (
 )
 
 func main() {
-	producerEx, err := producer2.NewProducer([]string{broker})
+	tracer.InitTracing("food-api tracer")
+
+	producerEx, err := producer.NewProducer([]string{broker})
 	if err != nil {
 		log.Fatal().Msgf("failed to create producer: %v", err)
 	}
@@ -44,7 +48,7 @@ func main() {
 	if err != nil {
 		log.Fatal().Msgf("failed to create consumer: %v", err)
 	}
-	consumer2.Subscribe(topic, consumerEx)
+	consumer.Subscribe(topic, consumerEx)
 
 	listen, err := net.Listen("tcp", grpcPort)
 	if err != nil {

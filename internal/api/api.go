@@ -145,6 +145,7 @@ func (fa *FoodAPI) MultiCreateFoodsV1(ctx context.Context, req *desc.MultiCreate
 		log.Warn().Msgf("input parameter error: %v", err.Error())
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+
 	foodsReq := req.GetFoods()
 	dbFoods := make([]food.Food, 0)
 	for _, elem := range foodsReq {

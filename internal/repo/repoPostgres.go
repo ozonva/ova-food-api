@@ -3,9 +3,12 @@ package repo
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/log"
 	"github.com/ozonva/ova-food-api/internal/food"
 )
 
@@ -127,7 +130,19 @@ func (r *repoPostgres) UpdateEntity(ctx context.Context, food food.Food) error {
 	return nil
 }
 func (r *repoPostgres) MultiAddEntity(ctx context.Context, foods [][]food.Food) error {
-	for _, elem := range foods {
+	tracer := opentracing.GlobalTracer()
+	span := tracer.StartSpan("MultiCreationFoods global")
+	defer span.Finish()
+
+	for i, elem := range foods {
+		childSpan := tracer.StartSpan(
+			fmt.Sprintf("MultiAddEntity for chunk № %d, bytes: %d", i, food.SizeFoods(elem)),
+			opentracing.ChildOf(span.Context()),
+		)
+		defer childSpan.Finish()
+		childSpan.LogFields(log.String("Chunk#", string(i)),
+			log.String("bytes", string(food.SizeFoods(elem))))
+
 		err := r.AddEntities(ctx, elem)
 		if err != nil {
 			return err

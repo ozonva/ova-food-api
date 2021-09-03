@@ -29,3 +29,9 @@ services:
       - ALLOW_PLAINTEXT_LISTENER=yes
     depends_on:
       - zookeeper
+
+  jaeger:
+    image: "jaegertracing/all-in-one:latest"
+    ports:
+      - "6831:6831/udp"
+      - "16686:16686"
