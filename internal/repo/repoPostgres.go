@@ -2,7 +2,6 @@ package repo
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 
 	sq "github.com/Masterminds/squirrel"
@@ -30,14 +29,9 @@ func (r *repoPostgres) AddEntities(ctx context.Context, foods []food.Food) error
 		query = query.Values(elem.UserId, elem.Type, elem.Name, elem.PortionSize)
 	}
 
-	res, err := query.ExecContext(ctx)
+	_, err := query.ExecContext(ctx)
 	if err != nil {
 		return err
-	}
-	if ra, rerr := res.RowsAffected(); rerr != nil {
-		return rerr
-	} else if ra < 1 {
-		return HaveNotElementErr
 	}
 	return nil
 }
@@ -95,9 +89,6 @@ func (r *repoPostgres) DescribeEntity(ctx context.Context, foodId uint64) (*food
 	err = row.Scan(&f.Id, &f.UserId, &f.Type, &f.Name, &f.PortionSize)
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, HaveNotElementErr
-		}
 		return nil, err
 	}
 	return &f, nil
@@ -109,15 +100,11 @@ func (r *repoPostgres) RemoveEntity(ctx context.Context, foodId uint64) error {
 	if err != nil {
 		return err
 	}
-	res, err := r.db.ExecContext(ctx, query, args...)
+	_, err = r.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return err
 	}
-	if ra, rerr := res.RowsAffected(); rerr != nil {
-		return rerr
-	} else if ra < 1 {
-		return HaveNotElementErr
-	}
+
 	return nil
 }
 
@@ -125,6 +112,7 @@ func (r *repoPostgres) UpdateEntity(ctx context.Context, food food.Food) error {
 	query, args, err := sq.Update(table).
 		SetMap(map[string]interface{}{"id": food.Id, "user_id": food.UserId,
 			"type": food.Type, "name": food.Name, "portion_size": food.PortionSize}).
+		Where(sq.Eq{"id": food.Id}).
 		PlaceholderFormat(sq.Dollar).
 		ToSql()
 	if err != nil {

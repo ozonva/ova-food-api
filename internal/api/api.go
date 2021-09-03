@@ -2,17 +2,20 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 
-	"github.com/ozonva/ova-food-api/internal/utils"
-
-	"github.com/ozonva/ova-food-api/internal/repo"
+	"github.com/Shopify/sarama"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/ozonva/ova-food-api/internal/Kafka/producer"
 	"github.com/ozonva/ova-food-api/internal/food"
+	"github.com/ozonva/ova-food-api/internal/repo"
+	"github.com/ozonva/ova-food-api/internal/utils"
 	desc "github.com/ozonva/ova-food-api/pkg/ova-food-api"
 )
 
@@ -20,12 +23,17 @@ type FoodAPI struct {
 	desc.UnimplementedOvaFoodApiServer
 	repo      repo.Repo
 	chunkSize int
+	producer  sarama.SyncProducer
+	topic     string
 }
 
-func NewFoodAPI(r repo.Repo, cs int) desc.OvaFoodApiServer {
+func NewFoodAPI(r repo.Repo, cs int, prod sarama.SyncProducer, top string) desc.OvaFoodApiServer {
 	return &FoodAPI{
 		repo:      r,
-		chunkSize: cs}
+		chunkSize: cs,
+		producer:  prod,
+		topic:     top,
+	}
 }
 
 func (fa *FoodAPI) CreateFoodV1(ctx context.Context, req *desc.CreateFoodV1Request) (*emptypb.Empty, error) {
@@ -42,7 +50,14 @@ func (fa *FoodAPI) CreateFoodV1(ctx context.Context, req *desc.CreateFoodV1Reque
 		log.Warn().Msgf("internal database error: %v", err.Error())
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	log.Info().Msgf("new food created: %s", req.GetFood())
+	msgstr := fmt.Sprintf("new food CREATED: %s", req.GetFood())
+	msg := producer.PrepareMessage(fa.topic, msgstr)
+	partition, offset, err := fa.producer.SendMessage(msg)
+	if err != nil {
+		log.Warn().Msgf("sending msg create error: %v", err.Error())
+	} else {
+		log.Info().Msgf("message %s was send to partition: %d, offset: %d", msgstr, partition, offset)
+	}
 	return &emptypb.Empty{}, nil
 }
 func (fa *FoodAPI) DescribeFoodV1(ctx context.Context, req *desc.DescribeFoodV1Request) (*desc.DescribeFoodV1Response, error) {
@@ -53,7 +68,7 @@ func (fa *FoodAPI) DescribeFoodV1(ctx context.Context, req *desc.DescribeFoodV1R
 	foodId := req.GetFoodId()
 	description, err := fa.repo.DescribeEntity(ctx, foodId)
 	if err != nil {
-		if errors.Is(err, repo.HaveNotElementErr) {
+		if errors.Is(err, sql.ErrNoRows) {
 			log.Info().Msgf("internal db error: %v", err.Error())
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
@@ -114,7 +129,14 @@ func (fa *FoodAPI) RemoveFoodV1(ctx context.Context, req *desc.RemoveFoodV1Reque
 		log.Warn().Msgf("internal db error: %v", err.Error())
 		return &emptypb.Empty{}, status.Error(codes.Internal, err.Error())
 	}
-	log.Info().Msgf("food deleted: %v", req.FoodId)
+	msgstr := fmt.Sprintf("food DELETED: %v", req.FoodId)
+	msg := producer.PrepareMessage(fa.topic, msgstr)
+	partition, offset, err := fa.producer.SendMessage(msg)
+	if err != nil {
+		log.Warn().Msgf("sending msg delete error: %v", err.Error())
+	} else {
+		log.Info().Msgf("message %s was send to partition: %d, offset: %d", msgstr, partition, offset)
+	}
 	return &emptypb.Empty{}, nil
 }
 
@@ -192,6 +214,13 @@ func (fa *FoodAPI) UpdateFoodV1(ctx context.Context, req *desc.UpdateFoodV1Reque
 		log.Warn().Msgf("internal database error: %v", err.Error())
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	log.Info().Msgf("food updated: %s", req.GetFood())
+	msgstr := fmt.Sprintf("food UPDATED: %s", req.GetFood())
+	msg := producer.PrepareMessage(fa.topic, msgstr)
+	partition, offset, err := fa.producer.SendMessage(msg)
+	if err != nil {
+		log.Warn().Msgf("sending msg update error: %v", err.Error())
+	} else {
+		log.Info().Msgf("message %s was send to partition: %d, offset: %d", msgstr, partition, offset)
+	}
 	return &emptypb.Empty{}, nil
 }

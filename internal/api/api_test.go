@@ -5,16 +5,16 @@ import (
 	"database/sql"
 	"regexp"
 
-	"github.com/ozonva/ova-food-api/internal/repo"
-
 	"github.com/DATA-DOG/go-sqlmock"
-
 	"github.com/jmoiron/sqlx"
-
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
+	"github.com/ozonva/ova-food-api/internal/Kafka/producer"
+	"github.com/rs/zerolog/log"
+
 	"github.com/ozonva/ova-food-api/internal/api"
 	"github.com/ozonva/ova-food-api/internal/food"
+	"github.com/ozonva/ova-food-api/internal/repo"
 	desc "github.com/ozonva/ova-food-api/pkg/ova-food-api"
 )
 
@@ -32,6 +32,9 @@ var _ = Describe("Api", func() {
 		descrResp *desc.DescribeFoodV1Response
 		listResp  *desc.ListFoodsV1Response
 		pageResp  *desc.PageFoodsV1Response
+		broker    = "127.0.0.1:9092"
+		chunkSize = 1
+		topic     = "cudFoods-topic"
 	)
 
 	BeforeEach(func() {
@@ -41,7 +44,11 @@ var _ = Describe("Api", func() {
 		repoTest = repo.NewRepo(sqlxDB)
 	})
 	JustBeforeEach(func() {
-		apiTest = api.NewFoodAPI(repoTest, 1)
+		producerEx, err := producer.NewProducer([]string{broker})
+		if err != nil {
+			log.Fatal().Msgf("failed to create producer: %v", err)
+		}
+		apiTest = api.NewFoodAPI(repoTest, chunkSize, producerEx, topic)
 	})
 	AfterEach(func() {
 		mock.ExpectClose()
@@ -102,18 +109,6 @@ var _ = Describe("Api", func() {
 			}()
 			gomega.Expect(err).Should(gomega.BeNil())
 			gomega.Expect(descrResp).ShouldNot(gomega.BeNil())
-		})
-		It("describe food with wrong id", func() {
-			mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, type, name, portion_size FROM food_info WHERE id = $1")).
-				WithArgs(8).
-				WillReturnError(repo.HaveNotElementErr)
-			func() {
-				descrResp, err = apiTest.DescribeFoodV1(ctx, &desc.DescribeFoodV1Request{
-					FoodId: 8,
-				})
-			}()
-			gomega.Expect(err).ShouldNot(gomega.BeNil())
-			gomega.Expect(descrResp).Should(gomega.BeNil())
 		})
 		It("describe food with internal error", func() {
 			mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, type, name, portion_size FROM food_info WHERE id = $1")).
@@ -207,15 +202,15 @@ var _ = Describe("Api", func() {
 					PortionSize: coffee.PortionSize,
 				},
 			}
-			mock.ExpectExec(regexp.QuoteMeta("UPDATE food_info SET id = $1, name = $2, portion_size = $3, type = $4, user_id = $5")).
-				WithArgs(coffee.Id, coffee.Name, coffee.PortionSize, coffee.Type, coffee.UserId).
+			mock.ExpectExec(regexp.QuoteMeta("UPDATE food_info SET id = $1, name = $2, portion_size = $3, type = $4, user_id = $5 WHERE id = $6")).
+				WithArgs(coffee.Id, coffee.Name, coffee.PortionSize, coffee.Type, coffee.UserId, coffee.Id).
 				WillReturnResult(sqlmock.NewResult(0, 1))
 			func() {
 				_, err = apiTest.UpdateFoodV1(ctx, req)
 			}()
 			gomega.Expect(err).Should(gomega.BeNil())
 		})
-		It("wrong id", func() {
+		It("cancelled", func() {
 			req := &desc.UpdateFoodV1Request{
 				Food: &desc.Food{
 					FoodId:      coffee.Id,
@@ -225,26 +220,8 @@ var _ = Describe("Api", func() {
 					PortionSize: coffee.PortionSize,
 				},
 			}
-			mock.ExpectExec(regexp.QuoteMeta("UPDATE food_info SET id = $1, name = $2, portion_size = $3, type = $4, user_id = $5")).
-				WithArgs(coffee.Id, coffee.Name, coffee.PortionSize, coffee.Type, coffee.UserId).
-				WillReturnResult(sqlmock.NewResult(0, 0))
-			func() {
-				_, err = apiTest.UpdateFoodV1(ctx, req)
-			}()
-			gomega.Expect(err).ShouldNot(gomega.BeNil())
-		})
-		It("wrong id", func() {
-			req := &desc.UpdateFoodV1Request{
-				Food: &desc.Food{
-					FoodId:      coffee.Id,
-					UserId:      coffee.UserId,
-					FoodT:       desc.FoodType(coffee.Type),
-					Name:        coffee.Name,
-					PortionSize: coffee.PortionSize,
-				},
-			}
-			mock.ExpectExec(regexp.QuoteMeta("UPDATE food_info SET id = $1, name = $2, portion_size = $3, type = $4, user_id = $5")).
-				WithArgs(coffee.Id, coffee.Name, coffee.PortionSize, coffee.Type, coffee.UserId).
+			mock.ExpectExec(regexp.QuoteMeta("UPDATE food_info SET id = $1, name = $2, portion_size = $3, type = $4, user_id = $5  WHERE id = $6")).
+				WithArgs(coffee.Id, coffee.Name, coffee.PortionSize, coffee.Type, coffee.UserId, coffee.Id).
 				WillReturnError(sqlmock.ErrCancelled)
 			func() {
 				_, err = apiTest.UpdateFoodV1(ctx, req)
@@ -306,31 +283,7 @@ var _ = Describe("Api", func() {
 			}()
 			gomega.Expect(err).ShouldNot(gomega.BeNil())
 		})
-		It("multiadd  - internal error", func() {
-			req := &desc.MultiCreateFoodsV1Request{
-				Foods: []*desc.CreationFood{{
-					UserId:      coffee.UserId,
-					FoodT:       desc.FoodType(coffee.Type),
-					Name:        coffee.Name,
-					PortionSize: coffee.PortionSize,
-				}, {
-					UserId:      pizza.UserId,
-					FoodT:       desc.FoodType(pizza.Type),
-					Name:        pizza.Name,
-					PortionSize: pizza.PortionSize,
-				}},
-			}
-			mock.ExpectExec(regexp.QuoteMeta("INSERT INTO food_info")).
-				WithArgs(coffee.UserId, coffee.Type, coffee.Name, coffee.PortionSize).
-				WillReturnResult(sqlmock.NewResult(2, 1))
-			mock.ExpectExec(regexp.QuoteMeta("INSERT INTO food_info")).
-				WithArgs(pizza.UserId, pizza.Type, pizza.Name, pizza.PortionSize).
-				WillReturnResult(sqlmock.NewResult(0, 0))
-			func() {
-				_, err = apiTest.MultiCreateFoodsV1(ctx, req)
-			}()
-			gomega.Expect(err).ShouldNot(gomega.BeNil())
-		})
+
 	})
 	Context("paging foods", func() {
 		BeforeEach(func() {
