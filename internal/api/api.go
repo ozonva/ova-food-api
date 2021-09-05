@@ -8,7 +8,6 @@ import (
 
 	"github.com/ozonva/ova-food-api/internal/metrics"
 
-	"github.com/Shopify/sarama"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -25,16 +24,14 @@ type FoodAPI struct {
 	desc.UnimplementedOvaFoodApiServer
 	repo      repo.Repo
 	chunkSize int
-	producer  sarama.SyncProducer
-	topic     string
+	producer  producer.Producer
 }
 
-func NewFoodAPI(r repo.Repo, cs int, prod sarama.SyncProducer, top string) desc.OvaFoodApiServer {
+func NewFoodAPI(r repo.Repo, cs int, prod producer.Producer) desc.OvaFoodApiServer {
 	return &FoodAPI{
 		repo:      r,
 		chunkSize: cs,
 		producer:  prod,
-		topic:     top,
 	}
 }
 
@@ -55,14 +52,8 @@ func (fa *FoodAPI) CreateFoodV1(ctx context.Context, req *desc.CreateFoodV1Reque
 
 	metrics.CounterIncrement("CREATE")
 
-	msgstr := fmt.Sprintf("new food CREATED: %s", req.GetFood())
-	msg := producer.PrepareMessage(fa.topic, msgstr)
-	partition, offset, err := fa.producer.SendMessage(msg)
-	if err != nil {
-		log.Warn().Msgf("sending msg create error: %v", err.Error())
-	} else {
-		log.Info().Msgf("message %s was send to partition: %d, offset: %d", msgstr, partition, offset)
-	}
+	fa.producer.Send(producer.Message{producer.CREATE, req.GetFood().String()})
+
 	return &emptypb.Empty{}, nil
 }
 func (fa *FoodAPI) DescribeFoodV1(ctx context.Context, req *desc.DescribeFoodV1Request) (*desc.DescribeFoodV1Response, error) {
@@ -137,14 +128,8 @@ func (fa *FoodAPI) RemoveFoodV1(ctx context.Context, req *desc.RemoveFoodV1Reque
 
 	metrics.CounterIncrement("DELETE")
 
-	msgstr := fmt.Sprintf("food DELETED: %v", req.FoodId)
-	msg := producer.PrepareMessage(fa.topic, msgstr)
-	partition, offset, err := fa.producer.SendMessage(msg)
-	if err != nil {
-		log.Warn().Msgf("sending msg delete error: %v", err.Error())
-	} else {
-		log.Info().Msgf("message %s was send to partition: %d, offset: %d", msgstr, partition, offset)
-	}
+	fa.producer.Send(producer.Message{producer.DELETE, fmt.Sprint(req.GetFoodId())})
+
 	return &emptypb.Empty{}, nil
 }
 
@@ -225,13 +210,7 @@ func (fa *FoodAPI) UpdateFoodV1(ctx context.Context, req *desc.UpdateFoodV1Reque
 	}
 	metrics.CounterIncrement("UPDATE")
 
-	msgstr := fmt.Sprintf("food UPDATED: %s", req.GetFood())
-	msg := producer.PrepareMessage(fa.topic, msgstr)
-	partition, offset, err := fa.producer.SendMessage(msg)
-	if err != nil {
-		log.Warn().Msgf("sending msg update error: %v", err.Error())
-	} else {
-		log.Info().Msgf("message %s was send to partition: %d, offset: %d", msgstr, partition, offset)
-	}
+	fa.producer.Send(producer.Message{producer.UPDATE, req.GetFood().String()})
+
 	return &emptypb.Empty{}, nil
 }

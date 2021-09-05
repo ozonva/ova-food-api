@@ -62,6 +62,7 @@ test:
 	go test ./internal/utils -cover
 	go test ./internal/flusher -cover
 	go test ./internal/saver -cover
+	go test ./internal/api -cover
 
 
 .PHONY: .build

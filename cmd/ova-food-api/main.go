@@ -63,15 +63,15 @@ func main() {
 	}
 	r := repo.NewRepo(db)
 
-	ova_food_api.RegisterOvaFoodApiServer(server, api.NewFoodAPI(r, chunkSize, *producerEx, topic))
+	ova_food_api.RegisterOvaFoodApiServer(server, api.NewFoodAPI(r, chunkSize, *producerEx))
 	reflection.Register(server)
 	if err := server.Serve(listen); err != nil {
 		log.Fatal().Msgf("failed to serveL %v", err)
 	}
 }
 
-func initKafka() *sarama.SyncProducer {
-	producerEx, err := producer.NewProducer([]string{brokerKafka})
+func initKafka() *producer.Producer {
+	producerEx, err := producer.NewProducer([]string{brokerKafka}, topic)
 	if err != nil {
 		log.Fatal().Msgf("failed to create producer: %v", err)
 	}
