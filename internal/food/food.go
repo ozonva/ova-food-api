@@ -3,6 +3,8 @@ package food
 import (
 	"encoding/json"
 	"unsafe"
+
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -22,18 +24,9 @@ type Food struct {
 func (f Food) String() string {
 	mf, err := json.Marshal(f)
 	if err != nil {
-		panic(err.Error())
+		log.Err(err).Msg("error String method of Food obj")
 	}
 	return string(mf)
-}
-
-func CreateFood(foodInfo []byte) *Food {
-	var food Food
-	err := json.Unmarshal(foodInfo, &food)
-	if err != nil {
-		panic(err.Error())
-	}
-	return &food
 }
 
 func (f Food) size() int {

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/ozonva/ova-food-api/internal/flusher"
 	"github.com/ozonva/ova-food-api/internal/food"
 )
@@ -16,11 +18,15 @@ type saver struct {
 	stop    chan struct{}
 }
 
-func (s *saver) Save(ctx context.Context, food food.Food) {
+func (s *saver) Save(ctx context.Context, food food.Food) error {
 	if len(s.data) == cap(s.data) {
-		s.flush(ctx)
+		err := s.flush(ctx)
+		if err != nil {
+			return err
+		}
 	}
 	s.data = append(s.data, food)
+	return nil
 }
 
 func (s *saver) Init(ctx context.Context) {
@@ -30,14 +36,17 @@ func (s *saver) Init(ctx context.Context) {
 
 func (s *saver) initTimerSaver(ctx context.Context, d time.Duration) {
 	s.ticker = time.NewTicker(d)
-	go func() {
+	go func() error {
 		for {
 			select {
 			case _, ok := <-s.ticker.C:
 				if ok {
-					s.flush(ctx)
+					err := s.flush(ctx)
+					if err != nil {
+						log.Warn().Msg("internal db error while Ticker flush")
+					}
 				} else {
-					panic(errors.New("Ticker channel was closed"))
+					log.Warn().Msg("Ticker channel was closed")
 				}
 			case <-s.stop:
 				break
@@ -47,20 +56,26 @@ func (s *saver) initTimerSaver(ctx context.Context, d time.Duration) {
 	}()
 }
 
-func (s *saver) Close(ctx context.Context) {
-	s.flush(ctx)
+func (s *saver) Close(ctx context.Context) error {
+	err := s.flush(ctx)
+	if err != nil {
+		return err
+	}
 	s.stop <- struct{}{}
 	close(s.stop)
 	s.ticker.Stop()
+	return nil
 }
 
-func (s *saver) flush(ctx context.Context) {
+func (s *saver) flush(ctx context.Context) error {
 	res := s.flusher.Flush(ctx, s.data)
 	if res != nil {
 		s.stop <- struct{}{}
 		close(s.stop)
 		s.ticker.Stop()
-		panic(errors.New("Internal repo error, cant save"))
+		log.Warn().Msg("Internal repo error, cant save")
+		return errors.New("Internal repo error, cant save")
 	}
 	s.data = s.data[:0]
+	return nil
 }
