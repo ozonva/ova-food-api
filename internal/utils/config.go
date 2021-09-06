@@ -1,26 +1,52 @@
 package utils
 
 import (
-	"fmt"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
-func UpdateConfig(filepath string) {
-	updateConfig := func(iteration int, filepath string) error {
-		file, err := os.OpenFile(filepath, os.O_APPEND, 0755)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		config := fmt.Sprintf("config %d = %d\n", iteration, iteration*2)
-		file.WriteString(config)
-		return nil
+type GRPC struct {
+	GRPCPort string `yaml:"grpc_port"`
+}
+
+type DATABASE struct {
+	DBHost     string `yaml:"db_host"`
+	DBPort     string `yaml:"db_port"`
+	DBUser     string `yaml:"db_user"`
+	DBPassword string `yaml:"db_password"`
+	DBName     string `yaml:"db_name"`
+	DBSslMode  string `yaml:"db_ssl_mode"`
+	DBDriver   string `yaml:"db_driver"`
+}
+type KAFKA struct {
+	KafkaBroker string `yaml:"broker_kafka"`
+	KafkaTopic  string `yaml:"topic"`
+}
+
+type APP struct {
+	AppChunkSize int `yaml:"chunk_size"`
+}
+type Config struct {
+	Grpc     GRPC     `yaml:"grpc"`
+	Database DATABASE `yaml:"database"`
+	Kafka    KAFKA    `yaml:"kafka"`
+	App      APP      `yaml:"app"`
+}
+
+func LoadConfig(path string) (*Config, error) {
+	config := &Config{}
+
+	file, err := os.Open(path)
+	defer file.Close()
+	if err != nil {
+		return nil, err
+	}
+	decoder := yaml.NewDecoder(file)
+	err = decoder.Decode(&config)
+	if err != nil {
+		return nil, err
 	}
 
-	for i := 0; i < 5; i++ {
-		err := updateConfig(i, filepath)
-		if err != nil {
-			panic(err)
-		}
-	}
+	return config, nil
 }
