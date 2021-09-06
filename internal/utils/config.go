@@ -25,7 +25,8 @@ type KAFKA struct {
 }
 
 type APP struct {
-	AppChunkSize int `yaml:"chunk_size"`
+	AppChunkSize int    `yaml:"chunk_size"`
+	Logfile      string `yaml:"logfile"`
 }
 type Config struct {
 	Grpc     GRPC     `yaml:"grpc"`

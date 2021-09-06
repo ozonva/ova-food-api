@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/rs/zerolog/log"
+	"github.com/ozonva/ova-food-api/internal/logger"
 
 	"github.com/ozonva/ova-food-api/internal/flusher"
 	"github.com/ozonva/ova-food-api/internal/food"
@@ -43,10 +43,10 @@ func (s *saver) initTimerSaver(ctx context.Context, d time.Duration) {
 				if ok {
 					err := s.flush(ctx)
 					if err != nil {
-						log.Warn().Msg("internal db error while Ticker flush")
+						logger.GlobalLogger.Warn().Msg("internal db error while Ticker flush")
 					}
 				} else {
-					log.Warn().Msg("Ticker channel was closed")
+					logger.GlobalLogger.Warn().Msg("Ticker channel was closed")
 				}
 			case <-s.stop:
 				break
@@ -73,7 +73,7 @@ func (s *saver) flush(ctx context.Context) error {
 		s.stop <- struct{}{}
 		close(s.stop)
 		s.ticker.Stop()
-		log.Warn().Msg("Internal repo error, cant save")
+		logger.GlobalLogger.Warn().Msg("Internal repo error, cant save")
 		return errors.New("Internal repo error, cant save")
 	}
 	s.data = s.data[:0]

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"unsafe"
 
-	"github.com/rs/zerolog/log"
+	"github.com/ozonva/ova-food-api/internal/logger"
 )
 
 const (
@@ -24,7 +24,7 @@ type Food struct {
 func (f Food) String() string {
 	mf, err := json.Marshal(f)
 	if err != nil {
-		log.Err(err).Msg("error String method of Food obj")
+		logger.GlobalLogger.Err(err).Msg("error String method of Food obj")
 	}
 	return string(mf)
 }

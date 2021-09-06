@@ -3,8 +3,9 @@ package producer
 import (
 	"fmt"
 
+	"github.com/ozonva/ova-food-api/internal/logger"
+
 	"github.com/Shopify/sarama"
-	"github.com/rs/zerolog/log"
 )
 
 type producer struct {
@@ -17,9 +18,9 @@ func (p producer) Send(msg Message) error {
 
 	partition, offset, err := p.foodProducer.SendMessage(preparedMsg)
 	if err != nil {
-		log.Warn().Msgf("sending msg error: %v", err.Error())
+		logger.GlobalLogger.Warn().Msgf("sending msg error: %v", err.Error())
 	} else {
-		log.Info().Msgf("message %s was send to partition: %d, offset: %d", sMsg, partition, offset)
+		logger.GlobalLogger.Info().Msgf("message %s was send to partition: %d, offset: %d", sMsg, partition, offset)
 	}
 	return nil
 }
@@ -31,7 +32,7 @@ func NewProducer(brokers []string, topic string) (Producer, error) {
 	config.Producer.Return.Successes = true
 	prod, err := sarama.NewSyncProducer(brokers, config)
 	if err != nil {
-		log.Error().Err(err).Msgf("kafka producer creation error")
+		logger.GlobalLogger.Error().Err(err).Msgf("kafka producer creation error")
 		return nil, err
 	}
 	return &producer{prod, topic}, nil

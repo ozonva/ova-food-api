@@ -15,3 +15,4 @@
     topic: "cudFoods-topic"
   app:
     chunk_size: 2
+    logfile: "log.txt"
