@@ -1,8 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
+	"net/http"
+
+	"github.com/ozonva/ova-food-api/internal/metrics"
+	"github.com/ozonva/ova-food-api/internal/tracer"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/ozonva/ova-food-api/internal/Kafka/consumer"
+	"github.com/ozonva/ova-food-api/internal/Kafka/producer"
+
+	"github.com/Shopify/sarama"
 
 	"github.com/ozonva/ova-food-api/internal/api"
 	ova_food_api "github.com/ozonva/ova-food-api/pkg/ova-food-api"
@@ -16,17 +27,28 @@ import (
 )
 
 const (
-	grpcPort   = ":8080"
-	dbHost     = "localhost"
-	dbPort     = "5432"
-	dbUser     = "postgres"
-	dbPassword = "postgres"
-	dbName     = "postgres"
-	dbSslMode  = "disable"
-	dbDriver   = "pgx"
+	grpcPort    = ":8080"
+	dbHost      = "localhost"
+	dbPort      = "5432"
+	dbUser      = "postgres"
+	dbPassword  = "postgres"
+	dbName      = "postgres"
+	dbSslMode   = "disable"
+	dbDriver    = "pgx"
+	brokerKafka = "127.0.0.1:9092"
+	chunkSize   = 2
+	topic       = "cudFoods-topic"
 )
 
 func main() {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	tracer.InitTracing("food-api tracer")
+	producerEx := initKafka(ctx)
+	go initMetrics()
+
 	listen, err := net.Listen("tcp", grpcPort)
 	if err != nil {
 		log.Fatal().Msgf("failed to listen: %v", err)
@@ -46,9 +68,29 @@ func main() {
 	}
 	r := repo.NewRepo(db)
 
-	ova_food_api.RegisterOvaFoodApiServer(server, api.NewFoodAPI(r))
+	ova_food_api.RegisterOvaFoodApiServer(server, api.NewFoodAPI(r, chunkSize, *producerEx))
 	reflection.Register(server)
+
 	if err := server.Serve(listen); err != nil {
-		log.Fatal().Msgf("failed to serveL %v", err)
+		log.Fatal().Msgf("failed to serve %v", err)
 	}
+}
+
+func initKafka(ctx context.Context) *producer.Producer {
+	producerEx, err := producer.NewProducer([]string{brokerKafka}, topic)
+	if err != nil {
+		log.Fatal().Msgf("failed to create producer: %v", err)
+	}
+
+	consumerEx, err := sarama.NewConsumer([]string{brokerKafka}, nil)
+	if err != nil {
+		log.Fatal().Msgf("failed to create consumer: %v", err)
+	}
+	consumer.Subscribe(ctx, topic, consumerEx)
+	return &producerEx
+}
+func initMetrics() {
+	metrics.RegisterMetrics()
+	http.Handle("/metrics", promhttp.Handler())
+	http.ListenAndServe(":2112", nil)
 }

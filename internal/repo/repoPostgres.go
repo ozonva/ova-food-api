@@ -1,11 +1,14 @@
 package repo
 
 import (
-	"database/sql"
+	"context"
 	"errors"
+	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/log"
 	"github.com/ozonva/ova-food-api/internal/food"
 )
 
@@ -19,34 +22,24 @@ type repoPostgres struct {
 	db sqlx.DB
 }
 
-func (r *repoPostgres) AddEntities(foods []food.Food) error {
-	for _, elem := range foods {
-		err := r.AddEntity(elem)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (r *repoPostgres) AddEntity(food food.Food) error {
-	query, args, err := sq.Insert(table).
+func (r *repoPostgres) AddEntities(ctx context.Context, foods []food.Food) error {
+	query := sq.Insert(table).
 		Columns("user_id", "type", "name", "portion_size").
-		Values(food.UserId, food.Type, food.Name, food.PortionSize).
-		PlaceholderFormat(sq.Dollar).
-		ToSql()
-	if err != nil {
-		return err
-	}
-	_, err = r.db.Exec(query, args...)
-	if err != nil {
-		return err
+		RunWith(r.db).
+		PlaceholderFormat(sq.Dollar)
+
+	for _, elem := range foods {
+		query = query.Values(elem.UserId, elem.Type, elem.Name, elem.PortionSize)
 	}
 
+	_, err := query.ExecContext(ctx)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (r *repoPostgres) ListEntities(limit, offset uint64) ([]food.Food, error) {
+func (r *repoPostgres) ListEntities(ctx context.Context, limit, offset uint64) ([]food.Food, error) {
 	query, args, err := sq.Select("*").
 		From(table).
 		Limit(limit).
@@ -55,7 +48,7 @@ func (r *repoPostgres) ListEntities(limit, offset uint64) ([]food.Food, error) {
 	if err != nil {
 		return nil, err
 	}
-	rows, err := r.db.Query(query, args...)
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +64,7 @@ func (r *repoPostgres) ListEntities(limit, offset uint64) ([]food.Food, error) {
 	}
 	return sliceFoods, rows.Err()
 }
-func (r *repoPostgres) DescribeEntity(foodId uint64) (*food.Food, error) {
+func (r *repoPostgres) DescribeEntity(ctx context.Context, foodId uint64) (*food.Food, error) {
 	query, args, err := sq.Select("id", "user_id", "type", "name", "portion_size").
 		From(table).
 		Where(sq.Eq{"id": foodId}).
@@ -79,29 +72,66 @@ func (r *repoPostgres) DescribeEntity(foodId uint64) (*food.Food, error) {
 	if err != nil {
 		return nil, err
 	}
-	row := r.db.QueryRow(query, args...)
+	row := r.db.QueryRowContext(ctx, query, args...)
 	f := food.Food{}
 	err = row.Scan(&f.Id, &f.UserId, &f.Type, &f.Name, &f.PortionSize)
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, HaveNotElementErr
-		}
 		return nil, err
 	}
 	return &f, nil
 }
-func (r *repoPostgres) RemoveEntity(foodId uint64) error {
+func (r *repoPostgres) RemoveEntity(ctx context.Context, foodId uint64) error {
 	query, args, err := sq.Delete(table).
 		Where(sq.Eq{"id": foodId}).
 		PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
 		return err
 	}
-	_, err = r.db.Exec(query, args...)
+	_, err = r.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func (r *repoPostgres) UpdateEntity(ctx context.Context, food food.Food) error {
+	query, args, err := sq.Update(table).
+		SetMap(map[string]interface{}{"id": food.Id, "user_id": food.UserId,
+			"type": food.Type, "name": food.Name, "portion_size": food.PortionSize}).
+		Where(sq.Eq{"id": food.Id}).
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
+	if err != nil {
+		return err
+	}
+	_, err = r.db.ExecContext(ctx, query, args...)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+func (r *repoPostgres) MultiAddEntity(ctx context.Context, foods [][]food.Food) error {
+	tracer := opentracing.GlobalTracer()
+	span := tracer.StartSpan("MultiCreationFoods global")
+	defer span.Finish()
+
+	for i, elem := range foods {
+		childSpan := tracer.StartSpan(
+			fmt.Sprintf("MultiAddEntity for chunk № %d, bytes: %d", i, food.SizeFoods(elem)),
+			opentracing.ChildOf(span.Context()),
+		)
+		defer childSpan.Finish()
+		childSpan.LogFields(log.String("Chunk#", string(i)),
+			log.String("bytes", string(food.SizeFoods(elem))))
+
+		err := r.AddEntities(ctx, elem)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }

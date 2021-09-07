@@ -2,6 +2,7 @@ package food
 
 import (
 	"encoding/json"
+	"unsafe"
 )
 
 const (
@@ -33,4 +34,22 @@ func CreateFood(foodInfo []byte) *Food {
 		panic(err.Error())
 	}
 	return &food
+}
+
+func (f Food) size() int {
+	size := 2 * 8       //2x uint64
+	size += len(f.Name) //string
+	size += 1           //uint8
+	size += 4           //float32
+	return size
+}
+
+func SizeFoods(f []Food) int {
+	size := 0
+	f = f[:cap(f)]
+	size += cap(f) * int(unsafe.Sizeof(f))
+	for i := range f {
+		size += (f[i]).size()
+	}
+	return size
 }

@@ -1,6 +1,7 @@
 package saver
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -15,26 +16,26 @@ type saver struct {
 	stop    chan struct{}
 }
 
-func (s *saver) Save(food food.Food) {
+func (s *saver) Save(ctx context.Context, food food.Food) {
 	if len(s.data) == cap(s.data) {
-		s.flush()
+		s.flush(ctx)
 	}
 	s.data = append(s.data, food)
 }
 
-func (s *saver) Init() {
-	s.initTimerSaver(time.Second)
+func (s *saver) Init(ctx context.Context) {
+	s.initTimerSaver(ctx, time.Second)
 	s.stop = make(chan struct{})
 }
 
-func (s *saver) initTimerSaver(d time.Duration) {
+func (s *saver) initTimerSaver(ctx context.Context, d time.Duration) {
 	s.ticker = time.NewTicker(d)
 	go func() {
 		for {
 			select {
 			case _, ok := <-s.ticker.C:
 				if ok {
-					s.flush()
+					s.flush(ctx)
 				} else {
 					panic(errors.New("Ticker channel was closed"))
 				}
@@ -46,15 +47,15 @@ func (s *saver) initTimerSaver(d time.Duration) {
 	}()
 }
 
-func (s *saver) Close() {
-	s.flush()
+func (s *saver) Close(ctx context.Context) {
+	s.flush(ctx)
 	s.stop <- struct{}{}
 	close(s.stop)
 	s.ticker.Stop()
 }
 
-func (s *saver) flush() {
-	res := s.flusher.Flush(s.data)
+func (s *saver) flush(ctx context.Context) {
+	res := s.flusher.Flush(ctx, s.data)
 	if res != nil {
 		s.stop <- struct{}{}
 		close(s.stop)
