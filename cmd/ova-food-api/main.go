@@ -40,7 +40,9 @@ func main() {
 	logger.InitLogger(config.App.Logfile)
 
 	tracer.InitTracing("food-api tracer")
+
 	producerEx := initKafka(config)
+
 	go initMetrics()
 
 	listen, err := net.Listen("tcp", config.Grpc.GRPCPort)
@@ -49,6 +51,18 @@ func main() {
 	}
 	server := grpc.NewServer()
 
+	db := initDB(config)
+	defer db.Close()
+	r := repo.NewRepo(db)
+
+	ova_food_api.RegisterOvaFoodApiServer(server, api.NewFoodAPI(r, config.App.AppChunkSize, *producerEx))
+	reflection.Register(server)
+	if err := server.Serve(listen); err != nil {
+		logger.GlobalLogger.Fatal().Msgf("failed to serve %v", err)
+	}
+}
+
+func initDB(config *utils.Config) *sqlx.DB {
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		config.Database.DBHost, config.Database.DBPort, config.Database.DBUser, config.Database.DBPassword,
 		config.Database.DBName, config.Database.DBSslMode)
@@ -56,18 +70,12 @@ func main() {
 	if err != nil {
 		logger.GlobalLogger.Error().Err(err).Msgf("failed to create connect to database")
 	}
-	defer db.Close()
+
 	err = db.Ping()
 	if err != nil {
 		logger.GlobalLogger.Error().Err(err).Msgf("failed to ping to database")
 	}
-	r := repo.NewRepo(db)
-
-	ova_food_api.RegisterOvaFoodApiServer(server, api.NewFoodAPI(r, config.App.AppChunkSize, *producerEx))
-	reflection.Register(server)
-	if err := server.Serve(listen); err != nil {
-		logger.GlobalLogger.Fatal().Msgf("failed to serveL %v", err)
-	}
+	return db
 }
 
 func initKafka(config *utils.Config) *producer.Producer {
@@ -83,6 +91,7 @@ func initKafka(config *utils.Config) *producer.Producer {
 	consumer.Subscribe(config.Kafka.KafkaTopic, consumerEx)
 	return &producerEx
 }
+
 func initMetrics() {
 	metrics.RegisterMetrics()
 	http.Handle("/metrics", promhttp.Handler())
