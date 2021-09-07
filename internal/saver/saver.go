@@ -36,7 +36,7 @@ func (s *saver) Init(ctx context.Context) {
 
 func (s *saver) initTimerSaver(ctx context.Context, d time.Duration) {
 	s.ticker = time.NewTicker(d)
-	go func() error {
+	go func() {
 		for {
 			select {
 			case _, ok := <-s.ticker.C:

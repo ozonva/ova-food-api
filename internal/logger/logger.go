@@ -31,5 +31,4 @@ func InitLogger(logfile string) {
 		}
 		GlobalLogger.Logger.Info().Msg("Logger init ok")
 	})
-	return
 }

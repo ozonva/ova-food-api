@@ -1,3 +1,0 @@
-{"level":"info","message":"Logger init ok"}
-{"level":"info","message":"Logger init ok"}
-{"level":"warn","message":"Internal repo error, cant save"}

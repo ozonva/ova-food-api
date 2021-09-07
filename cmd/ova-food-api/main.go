@@ -95,5 +95,8 @@ func initKafka(config *utils.Config) *producer.Producer {
 func initMetrics() {
 	metrics.RegisterMetrics()
 	http.Handle("/metrics", promhttp.Handler())
-	http.ListenAndServe(":2112", nil)
+	err := http.ListenAndServe(":2112", nil)
+	if err != nil {
+		logger.GlobalLogger.Warn().Msg("cant init metrics!")
+	}
 }

@@ -3,6 +3,8 @@ package utils
 import (
 	"os"
 
+	"github.com/ozonva/ova-food-api/internal/logger"
+
 	"gopkg.in/yaml.v3"
 )
 
@@ -39,7 +41,12 @@ func LoadConfig(path string) (*Config, error) {
 	config := &Config{}
 
 	file, err := os.Open(path)
-	defer file.Close()
+	defer func() {
+		err := file.Close()
+		if err != nil {
+			logger.GlobalLogger.Warn().Msg("Cant close file")
+		}
+	}()
 	if err != nil {
 		return nil, err
 	}

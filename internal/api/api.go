@@ -53,8 +53,12 @@ func (fa *FoodAPI) CreateFoodV1(ctx context.Context, req *desc.CreateFoodV1Reque
 
 	metrics.CounterIncrement("CREATE")
 
-	fa.producer.Send(producer.Message{producer.CREATE, req.GetFood().String()})
-
+	err = fa.producer.Send(producer.Message{
+		CmdType: producer.CREATE,
+		Info:    req.GetFood().String()})
+	if err != nil {
+		logger.GlobalLogger.Warn().Msgf("Cant send msg to Kafka: %v", err.Error())
+	}
 	return &emptypb.Empty{}, nil
 }
 func (fa *FoodAPI) DescribeFoodV1(ctx context.Context, req *desc.DescribeFoodV1Request) (*desc.DescribeFoodV1Response, error) {
@@ -129,8 +133,12 @@ func (fa *FoodAPI) RemoveFoodV1(ctx context.Context, req *desc.RemoveFoodV1Reque
 
 	metrics.CounterIncrement("DELETE")
 
-	fa.producer.Send(producer.Message{producer.DELETE, fmt.Sprint(req.GetFoodId())})
-
+	err = fa.producer.Send(producer.Message{
+		CmdType: producer.DELETE,
+		Info:    fmt.Sprint(req.GetFoodId())})
+	if err != nil {
+		logger.GlobalLogger.Warn().Msgf("Cant send msg to Kafka: %v", err.Error())
+	}
 	return &emptypb.Empty{}, nil
 }
 
@@ -166,7 +174,7 @@ func (fa *FoodAPI) PageFoods(ctx context.Context, req *desc.PageFoodsV1Request) 
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	foods := make(map[uint64]*desc.Food)
-	dbFoods := []food.Food{}
+	var dbFoods []food.Food
 	dbFoods, err := fa.repo.ListEntities(ctx, req.GetLimit(), req.GetOffset())
 	if err != nil {
 		if errors.Is(err, repo.HaveNotElementErr) {
@@ -211,7 +219,11 @@ func (fa *FoodAPI) UpdateFoodV1(ctx context.Context, req *desc.UpdateFoodV1Reque
 	}
 	metrics.CounterIncrement("UPDATE")
 
-	fa.producer.Send(producer.Message{producer.UPDATE, req.GetFood().String()})
-
+	err = fa.producer.Send(producer.Message{
+		CmdType: producer.UPDATE,
+		Info:    req.GetFood().String()})
+	if err != nil {
+		logger.GlobalLogger.Warn().Msgf("Cant send msg to Kafka: %v", err.Error())
+	}
 	return &emptypb.Empty{}, nil
 }
