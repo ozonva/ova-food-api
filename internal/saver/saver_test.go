@@ -71,6 +71,7 @@ var _ = Describe("Saver internal error", func() {
 	)
 
 	BeforeEach(func() {
+		logger.InitLogger("test-log.txt")
 		ctx = context.Background()
 		ctrl = gomock.NewController(GinkgoT())
 		mockRepo = mocks.NewMockRepo(ctrl)
