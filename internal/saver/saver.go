@@ -19,7 +19,7 @@ type saver struct {
 }
 
 func (s *saver) Save(ctx context.Context, food food.Food) error {
-	if len(s.data) == cap(s.data) {
+	if len(s.data) >= cap(s.data) {
 		err := s.flush(ctx)
 		if err != nil {
 			return err

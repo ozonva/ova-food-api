@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/ozonva/ova-food-api/internal/logger"
+
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
@@ -28,6 +30,7 @@ var _ = Describe("Saver check init", func() {
 	)
 
 	BeforeEach(func() {
+		logger.InitLogger("test-log.txt")
 		ctx = context.Background()
 		ctrl = gomock.NewController(GinkgoT())
 		mockRepo = mocks.NewMockRepo(ctrl)
@@ -64,6 +67,7 @@ var _ = Describe("Saver internal error", func() {
 		mockRepo      *mocks.MockRepo
 		flusherEntity flusher.Flusher
 		saverEntity   saver.Saver
+		res1, res2    error
 	)
 
 	BeforeEach(func() {
@@ -87,8 +91,9 @@ var _ = Describe("Saver internal error", func() {
 			mockRepo.EXPECT().AddEntities(ctx, gomock.Any()).Return(errors.New("some internal error"))
 		})
 		It("repo not save foods, internal error", func() {
-			saverEntity.Save(ctx, coffee)
-			res2 := saverEntity.Save(ctx, coffee)
+			res1 = saverEntity.Save(ctx, coffee)
+			res2 = saverEntity.Save(ctx, coffee)
+			gomega.Expect(res1).Should(gomega.BeNil())
 			gomega.Expect(res2).ShouldNot(gomega.BeNil())
 		})
 	})
@@ -96,15 +101,15 @@ var _ = Describe("Saver internal error", func() {
 
 var _ = Describe("Saver save data", func() {
 	var (
-		coffee        = food.Food{Id: 0, UserId: 0, Type: food.Drinks, Name: "Coffee", PortionSize: 60}
-		ctx           context.Context
-		chunkSize     int
-		capacity      uint
-		ctrl          *gomock.Controller
-		mockRepo      *mocks.MockRepo
-		flusherEntity flusher.Flusher
-		saverEntity   saver.Saver
-		res           error
+		coffee           = food.Food{Id: 0, UserId: 0, Type: food.Drinks, Name: "Coffee", PortionSize: 60}
+		ctx              context.Context
+		chunkSize        int
+		capacity         uint
+		ctrl             *gomock.Controller
+		mockRepo         *mocks.MockRepo
+		flusherEntity    flusher.Flusher
+		saverEntity      saver.Saver
+		res1, res2, res3 error
 	)
 
 	BeforeEach(func() {
@@ -128,9 +133,9 @@ var _ = Describe("Saver save data", func() {
 			mockRepo.EXPECT().AddEntities(ctx, gomock.Any()).Return(nil).Times(2)
 		})
 		It("repo save foods by ticker", func() {
-			res = saverEntity.Save(ctx, coffee) //AddEntities() 1
+			res1 = saverEntity.Save(ctx, coffee) //AddEntities() 1
 			time.Sleep(1500 * time.Millisecond)
-			gomega.Expect(res).Should(gomega.BeNil())
+			gomega.Expect(res1).Should(gomega.BeNil())
 			saverEntity.Close(ctx) //AddEntities() 2
 		})
 	})
@@ -141,10 +146,12 @@ var _ = Describe("Saver save data", func() {
 			mockRepo.EXPECT().AddEntities(ctx, gomock.Any()).Return(nil).Times(3)
 		})
 		It("repo save foods by .Save()", func() {
-			saverEntity.Save(ctx, coffee) //AddEntities() 1
-			saverEntity.Save(ctx, coffee) //AddEntities() 2
-			res = saverEntity.Save(ctx, coffee)
-			gomega.Expect(res).Should(gomega.BeNil())
+			res1 = saverEntity.Save(ctx, coffee) //AddEntities() 1
+			res2 = saverEntity.Save(ctx, coffee) //AddEntities() 2
+			res3 = saverEntity.Save(ctx, coffee)
+			gomega.Expect(res1).Should(gomega.BeNil())
+			gomega.Expect(res2).Should(gomega.BeNil())
+			gomega.Expect(res3).Should(gomega.BeNil())
 			saverEntity.Close(ctx) //AddEntities() 3
 		})
 	})
