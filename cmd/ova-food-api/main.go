@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -40,8 +41,12 @@ const (
 )
 
 func main() {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	tracer.InitTracing("food-api tracer")
-	producerEx := initKafka()
+	producerEx := initKafka(ctx)
 	go initMetrics()
 
 	listen, err := net.Listen("tcp", grpcPort)
@@ -65,12 +70,13 @@ func main() {
 
 	ova_food_api.RegisterOvaFoodApiServer(server, api.NewFoodAPI(r, chunkSize, *producerEx))
 	reflection.Register(server)
+
 	if err := server.Serve(listen); err != nil {
-		log.Fatal().Msgf("failed to serveL %v", err)
+		log.Fatal().Msgf("failed to serve %v", err)
 	}
 }
 
-func initKafka() *producer.Producer {
+func initKafka(ctx context.Context) *producer.Producer {
 	producerEx, err := producer.NewProducer([]string{brokerKafka}, topic)
 	if err != nil {
 		log.Fatal().Msgf("failed to create producer: %v", err)
@@ -80,7 +86,7 @@ func initKafka() *producer.Producer {
 	if err != nil {
 		log.Fatal().Msgf("failed to create consumer: %v", err)
 	}
-	consumer.Subscribe(topic, consumerEx)
+	consumer.Subscribe(ctx, topic, consumerEx)
 	return &producerEx
 }
 func initMetrics() {

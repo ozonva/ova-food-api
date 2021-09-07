@@ -25,7 +25,7 @@ service OvaFoodApi {
 			post: "/v1/foods"
 		};
 	}
-	// Возвращает опимание сущности пищи по её Id
+	// Возвращает опиcание сущности пищи по её Id
 	rpc DescribeFoodV1(DescribeFoodV1Request) returns (DescribeFoodV1Response) {
 		option (google.api.http) = {
 			get: "/v1/foods/{food_id}"
