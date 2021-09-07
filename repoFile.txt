@@ -1,4 +1,0 @@
-{"Id":0,"UserId":0,"Type":0,"Name":"Coffee","PortionSize":60}
-{"Id":1,"UserId":0,"Type":1,"Name":"Pizza","PortionSize":300}{"Id":4,"UserId":3,"Type":0,"Name":"Cola","PortionSize":200}
-{"Id":3,"UserId":2,"Type":1,"Name":"Bounty","PortionSize":100}{"Id":2,"UserId":1,"Type":0,"Name":"Tea","PortionSize":100}
-{"Id":0,"UserId":0,"Type":0,"Name":"Coffee","PortionSize":60}

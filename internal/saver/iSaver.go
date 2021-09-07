@@ -8,9 +8,9 @@ import (
 )
 
 type Saver interface {
-	Save(ctx context.Context, food food.Food)
+	Save(ctx context.Context, food food.Food) error
 	Init(ctx context.Context)
-	Close(ctx context.Context)
+	Close(ctx context.Context) error
 }
 
 // NewSaver возвращает Saver с поддержкой переодического сохранения

@@ -2,7 +2,7 @@ package tracer
 
 import (
 	"github.com/opentracing/opentracing-go"
-	"github.com/rs/zerolog/log"
+	"github.com/ozonva/ova-food-api/internal/logger"
 	"github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	jaegerlog "github.com/uber/jaeger-client-go/log"
@@ -30,7 +30,7 @@ func InitTracing(serviceName string) {
 	)
 
 	if err != nil {
-		log.Fatal().Msgf("Jaeger tracer creation failed: %v", err)
+		logger.GlobalLogger.Fatal().Msgf("Jaeger tracer creation failed: %v", err)
 	}
 	opentracing.SetGlobalTracer(tracer)
 }

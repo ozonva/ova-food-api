@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"regexp"
 
+	"github.com/ozonva/ova-food-api/internal/logger"
+
 	"github.com/golang/mock/gomock"
 
 	"github.com/ozonva/ova-food-api/internal/mocks"
@@ -40,6 +42,7 @@ var _ = Describe("Api", func() {
 	)
 
 	BeforeEach(func() {
+		logger.InitLogger("test-log.txt")
 		ctx = context.Background()
 		db, sqlMock, err = sqlmock.New()
 		sqlxDB = sqlx.NewDb(db, "sqlmock")
@@ -95,6 +98,7 @@ var _ = Describe("Api", func() {
 		})
 
 	})
+
 	Context("describe food", func() {
 		BeforeEach(func() {
 		})
@@ -124,6 +128,7 @@ var _ = Describe("Api", func() {
 			gomega.Expect(descrResp).Should(gomega.BeNil())
 		})
 	})
+
 	Context("list foods", func() {
 		BeforeEach(func() {
 		})
@@ -316,4 +321,5 @@ var _ = Describe("Api", func() {
 			gomega.Expect(pageResp).Should(gomega.BeNil())
 		})
 	})
+
 })

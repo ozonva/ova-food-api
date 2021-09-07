@@ -1,0 +1,18 @@
+  grpc:
+    grpc_port: ":8080"
+
+  database:
+    db_host      : "localhost"
+    db_port      : "5432"
+    db_user      : "postgres"
+    db_password  : "postgres"
+    db_name      : "postgres"
+    db_ssl_mode   : "disable"
+    db_driver    : "pgx"
+
+  kafka:
+    broker_kafka: "127.0.0.1:9092"
+    topic: "cudFoods-topic"
+  app:
+    chunk_size: 2
+    logfile: "log.txt"

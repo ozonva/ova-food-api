@@ -125,8 +125,8 @@ func (r *repoPostgres) MultiAddEntity(ctx context.Context, foods [][]food.Food) 
 			opentracing.ChildOf(span.Context()),
 		)
 		defer childSpan.Finish()
-		childSpan.LogFields(log.String("Chunk#", string(i)),
-			log.String("bytes", string(food.SizeFoods(elem))))
+		childSpan.LogFields(log.String("Chunk#", fmt.Sprint(i)),
+			log.String("bytes", fmt.Sprint(food.SizeFoods(elem))))
 
 		err := r.AddEntities(ctx, elem)
 		if err != nil {

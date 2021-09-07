@@ -19,7 +19,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/lib/pq v1.10.2 // indirect
 	github.com/onsi/ginkgo v1.16.4
-	github.com/onsi/gomega v1.10.1
+	github.com/onsi/gomega v1.13.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/rs/zerolog v1.23.0
@@ -34,5 +34,5 @@ require (
 	google.golang.org/genproto v0.0.0-20210825212027-de86158e7fda
 	google.golang.org/grpc v1.40.0
 	google.golang.org/protobuf v1.27.1
-	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )

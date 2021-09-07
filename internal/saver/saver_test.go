@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/ozonva/ova-food-api/internal/logger"
+
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
@@ -24,9 +26,11 @@ var _ = Describe("Saver check init", func() {
 		flusherEntity flusher.Flusher
 		saverEntity   saver.Saver
 		capacity      uint
+		res           error
 	)
 
 	BeforeEach(func() {
+		logger.InitLogger("test-log.txt")
 		ctx = context.Background()
 		ctrl = gomock.NewController(GinkgoT())
 		mockRepo = mocks.NewMockRepo(ctrl)
@@ -40,21 +44,22 @@ var _ = Describe("Saver check init", func() {
 	})
 
 	Context("saver entity save foods, init ok", func() {
+		BeforeEach(func() {
+			res = saverEntity.Save(ctx, coffee)
+		})
 		It("saver entity save foods, init ok", func() {
 			chunkSize = 2
 			capacity = 2
-			gomega.Expect(func() {
-				saverEntity.Save(ctx, coffee)
-			}).ShouldNot(gomega.Panic())
+			gomega.Expect(res).Should(gomega.BeNil())
 			saverEntity.Close(ctx)
 		})
 	})
 })
+
 var _ = Describe("Saver internal error", func() {
 	var (
 		ctx    context.Context
 		coffee = food.Food{Id: 0, UserId: 0, Type: food.Drinks, Name: "Coffee", PortionSize: 60}
-		pizza  = food.Food{Id: 1, UserId: 0, Type: food.Foods, Name: "Pizza", PortionSize: 300}
 
 		chunkSize     int
 		capacity      uint
@@ -62,9 +67,11 @@ var _ = Describe("Saver internal error", func() {
 		mockRepo      *mocks.MockRepo
 		flusherEntity flusher.Flusher
 		saverEntity   saver.Saver
+		res1, res2    error
 	)
 
 	BeforeEach(func() {
+		logger.InitLogger("test-log.txt")
 		ctx = context.Background()
 		ctrl = gomock.NewController(GinkgoT())
 		mockRepo = mocks.NewMockRepo(ctrl)
@@ -85,24 +92,25 @@ var _ = Describe("Saver internal error", func() {
 			mockRepo.EXPECT().AddEntities(ctx, gomock.Any()).Return(errors.New("some internal error"))
 		})
 		It("repo not save foods, internal error", func() {
-
-			gomega.Expect(func() {
-				saverEntity.Save(ctx, coffee)
-				saverEntity.Save(ctx, pizza)
-			}).Should(gomega.PanicWith(errors.New("Internal repo error, cant save")))
+			res1 = saverEntity.Save(ctx, coffee)
+			res2 = saverEntity.Save(ctx, coffee)
+			gomega.Expect(res1).Should(gomega.BeNil())
+			gomega.Expect(res2).ShouldNot(gomega.BeNil())
 		})
 	})
 })
+
 var _ = Describe("Saver save data", func() {
 	var (
-		coffee        = food.Food{Id: 0, UserId: 0, Type: food.Drinks, Name: "Coffee", PortionSize: 60}
-		ctx           context.Context
-		chunkSize     int
-		capacity      uint
-		ctrl          *gomock.Controller
-		mockRepo      *mocks.MockRepo
-		flusherEntity flusher.Flusher
-		saverEntity   saver.Saver
+		coffee           = food.Food{Id: 0, UserId: 0, Type: food.Drinks, Name: "Coffee", PortionSize: 60}
+		ctx              context.Context
+		chunkSize        int
+		capacity         uint
+		ctrl             *gomock.Controller
+		mockRepo         *mocks.MockRepo
+		flusherEntity    flusher.Flusher
+		saverEntity      saver.Saver
+		res1, res2, res3 error
 	)
 
 	BeforeEach(func() {
@@ -126,10 +134,9 @@ var _ = Describe("Saver save data", func() {
 			mockRepo.EXPECT().AddEntities(ctx, gomock.Any()).Return(nil).Times(2)
 		})
 		It("repo save foods by ticker", func() {
-			gomega.Expect(func() {
-				saverEntity.Save(ctx, coffee) //AddEntities() 1
-				time.Sleep(1500 * time.Millisecond)
-			}).ShouldNot(gomega.Panic())
+			res1 = saverEntity.Save(ctx, coffee) //AddEntities() 1
+			time.Sleep(1500 * time.Millisecond)
+			gomega.Expect(res1).Should(gomega.BeNil())
 			saverEntity.Close(ctx) //AddEntities() 2
 		})
 	})
@@ -140,11 +147,12 @@ var _ = Describe("Saver save data", func() {
 			mockRepo.EXPECT().AddEntities(ctx, gomock.Any()).Return(nil).Times(3)
 		})
 		It("repo save foods by .Save()", func() {
-			gomega.Expect(func() {
-				saverEntity.Save(ctx, coffee) //AddEntities() 1
-				saverEntity.Save(ctx, coffee) //AddEntities() 2
-				saverEntity.Save(ctx, coffee)
-			}).ShouldNot(gomega.Panic())
+			res1 = saverEntity.Save(ctx, coffee) //AddEntities() 1
+			res2 = saverEntity.Save(ctx, coffee) //AddEntities() 2
+			res3 = saverEntity.Save(ctx, coffee)
+			gomega.Expect(res1).Should(gomega.BeNil())
+			gomega.Expect(res2).Should(gomega.BeNil())
+			gomega.Expect(res3).Should(gomega.BeNil())
 			saverEntity.Close(ctx) //AddEntities() 3
 		})
 	})

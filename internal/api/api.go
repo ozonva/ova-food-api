@@ -6,9 +6,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ozonva/ova-food-api/internal/logger"
+
 	"github.com/ozonva/ova-food-api/internal/metrics"
 
-	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -37,7 +38,7 @@ func NewFoodAPI(r repo.Repo, cs int, prod producer.Producer) desc.OvaFoodApiServ
 
 func (fa *FoodAPI) CreateFoodV1(ctx context.Context, req *desc.CreateFoodV1Request) (*emptypb.Empty, error) {
 	if err := req.Validate(); err != nil {
-		log.Warn().Msgf("input parameter error: %v", err.Error())
+		logger.GlobalLogger.Warn().Msgf("input parameter error: %v", err.Error())
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	err := fa.repo.AddEntities(ctx, []food.Food{
@@ -49,33 +50,37 @@ func (fa *FoodAPI) CreateFoodV1(ctx context.Context, req *desc.CreateFoodV1Reque
 		},
 	})
 	if err != nil {
-		log.Warn().Msgf("internal database error: %v", err.Error())
+		logger.GlobalLogger.Warn().Msgf("internal database error: %v", err.Error())
 		metrics.CounterIncrement("CREATE_FAIL")
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	metrics.CounterIncrement("CREATE")
 
-	fa.producer.Send(producer.Message{producer.CREATE, req.GetFood().String()})
-
+	err = fa.producer.Send(producer.Message{
+		CmdType: producer.CREATE,
+		Info:    req.GetFood().String()})
+	if err != nil {
+		logger.GlobalLogger.Warn().Msgf("Cant send msg to Kafka: %v", err.Error())
+	}
 	return &emptypb.Empty{}, nil
 }
 func (fa *FoodAPI) DescribeFoodV1(ctx context.Context, req *desc.DescribeFoodV1Request) (*desc.DescribeFoodV1Response, error) {
 	if err := req.Validate(); err != nil {
-		log.Warn().Msgf("input parameter error: %v", err.Error())
+		logger.GlobalLogger.Warn().Msgf("input parameter error: %v", err.Error())
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	foodId := req.GetFoodId()
 	description, err := fa.repo.DescribeEntity(ctx, foodId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Info().Msgf("internal db error: %v", err.Error())
+			logger.GlobalLogger.Info().Msgf("internal db error: %v", err.Error())
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
-		log.Warn().Msgf("internal db error: %v", err.Error())
+		logger.GlobalLogger.Warn().Msgf("internal db error: %v", err.Error())
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	log.Info().Msg("return description")
+	logger.GlobalLogger.Info().Msg("return description")
 	return &desc.DescribeFoodV1Response{
 		Food: &desc.Food{
 			FoodId:      description.Id,
@@ -88,7 +93,7 @@ func (fa *FoodAPI) DescribeFoodV1(ctx context.Context, req *desc.DescribeFoodV1R
 }
 func (fa *FoodAPI) ListFoodsV1(ctx context.Context, req *desc.ListFoodsV1Request) (*desc.ListFoodsV1Response, error) {
 	if err := req.Validate(); err != nil {
-		log.Warn().Msgf("input parameter error: %v", err.Error())
+		logger.GlobalLogger.Warn().Msgf("input parameter error: %v", err.Error())
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	foods := make(map[uint64]*desc.Food)
@@ -97,10 +102,10 @@ func (fa *FoodAPI) ListFoodsV1(ctx context.Context, req *desc.ListFoodsV1Request
 		elem, err := fa.repo.DescribeEntity(ctx, id)
 		if err != nil {
 			if errors.Is(err, repo.HaveNotElementErr) {
-				log.Info().Msgf("internal db error: %v", err.Error())
+				logger.GlobalLogger.Info().Msgf("internal db error: %v", err.Error())
 				return nil, status.Error(codes.InvalidArgument, err.Error())
 			}
-			log.Warn().Msgf("internal db error: %v", err.Error())
+			logger.GlobalLogger.Warn().Msgf("internal db error: %v", err.Error())
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 		foods[elem.Id] = &desc.Food{
@@ -111,12 +116,12 @@ func (fa *FoodAPI) ListFoodsV1(ctx context.Context, req *desc.ListFoodsV1Request
 			PortionSize: elem.PortionSize,
 		}
 	}
-	log.Info().Msg("return elements description")
+	logger.GlobalLogger.Info().Msg("return elements description")
 	return &desc.ListFoodsV1Response{Foods: foods}, nil
 }
 func (fa *FoodAPI) RemoveFoodV1(ctx context.Context, req *desc.RemoveFoodV1Request) (*emptypb.Empty, error) {
 	if err := req.Validate(); err != nil {
-		log.Warn().Msgf("input parameter error: %v", err.Error())
+		logger.GlobalLogger.Warn().Msgf("input parameter error: %v", err.Error())
 		return &emptypb.Empty{}, status.Error(codes.InvalidArgument, err.Error())
 	}
 	id := req.GetFoodId()
@@ -124,23 +129,27 @@ func (fa *FoodAPI) RemoveFoodV1(ctx context.Context, req *desc.RemoveFoodV1Reque
 	if err != nil {
 		metrics.CounterIncrement("DELETE_FAIL")
 		if errors.Is(err, repo.HaveNotElementErr) {
-			log.Info().Msgf("internal db error: %v", err.Error())
+			logger.GlobalLogger.Info().Msgf("internal db error: %v", err.Error())
 			return &emptypb.Empty{}, status.Error(codes.InvalidArgument, err.Error())
 		}
-		log.Warn().Msgf("internal db error: %v", err.Error())
+		logger.GlobalLogger.Warn().Msgf("internal db error: %v", err.Error())
 		return &emptypb.Empty{}, status.Error(codes.Internal, err.Error())
 	}
 
 	metrics.CounterIncrement("DELETE")
 
-	fa.producer.Send(producer.Message{producer.DELETE, fmt.Sprint(req.GetFoodId())})
-
+	err = fa.producer.Send(producer.Message{
+		CmdType: producer.DELETE,
+		Info:    fmt.Sprint(req.GetFoodId())})
+	if err != nil {
+		logger.GlobalLogger.Warn().Msgf("Cant send msg to Kafka: %v", err.Error())
+	}
 	return &emptypb.Empty{}, nil
 }
 
 func (fa *FoodAPI) MultiCreateFoodsV1(ctx context.Context, req *desc.MultiCreateFoodsV1Request) (*emptypb.Empty, error) {
 	if err := req.Validate(); err != nil {
-		log.Warn().Msgf("input parameter error: %v", err.Error())
+		logger.GlobalLogger.Warn().Msgf("input parameter error: %v", err.Error())
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -158,26 +167,26 @@ func (fa *FoodAPI) MultiCreateFoodsV1(ctx context.Context, req *desc.MultiCreate
 	bulks := utils.SplitToBulks(dbFoods, fa.chunkSize)
 	err := fa.repo.MultiAddEntity(ctx, bulks)
 	if err != nil {
-		log.Warn().Msgf("internal database error: %v", err.Error())
+		logger.GlobalLogger.Warn().Msgf("internal database error: %v", err.Error())
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	log.Info().Msgf("new foods(%v) created", cap(req.GetFoods()))
+	logger.GlobalLogger.Info().Msgf("new foods(%v) created", cap(req.GetFoods()))
 	return &emptypb.Empty{}, nil
 }
 func (fa *FoodAPI) PageFoods(ctx context.Context, req *desc.PageFoodsV1Request) (*desc.PageFoodsV1Response, error) {
 	if err := req.Validate(); err != nil {
-		log.Warn().Msgf("input parameter error: %v", err.Error())
+		logger.GlobalLogger.Warn().Msgf("input parameter error: %v", err.Error())
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	foods := make(map[uint64]*desc.Food)
-	dbFoods := []food.Food{}
+	var dbFoods []food.Food
 	dbFoods, err := fa.repo.ListEntities(ctx, req.GetLimit(), req.GetOffset())
 	if err != nil {
 		if errors.Is(err, repo.HaveNotElementErr) {
-			log.Info().Msgf("internal db error: %v", err.Error())
+			logger.GlobalLogger.Info().Msgf("internal db error: %v", err.Error())
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
-		log.Warn().Msgf("internal db error: %v", err.Error())
+		logger.GlobalLogger.Warn().Msgf("internal db error: %v", err.Error())
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -191,12 +200,12 @@ func (fa *FoodAPI) PageFoods(ctx context.Context, req *desc.PageFoodsV1Request) 
 		}
 	}
 
-	log.Info().Msg("return elements description")
+	logger.GlobalLogger.Info().Msg("return elements description")
 	return &desc.PageFoodsV1Response{Foods: foods}, nil
 }
 func (fa *FoodAPI) UpdateFoodV1(ctx context.Context, req *desc.UpdateFoodV1Request) (*emptypb.Empty, error) {
 	if err := req.Validate(); err != nil {
-		log.Warn().Msgf("input parameter error: %v", err.Error())
+		logger.GlobalLogger.Warn().Msgf("input parameter error: %v", err.Error())
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	err := fa.repo.UpdateEntity(ctx, food.Food{
@@ -208,15 +217,19 @@ func (fa *FoodAPI) UpdateFoodV1(ctx context.Context, req *desc.UpdateFoodV1Reque
 	if err != nil {
 		metrics.CounterIncrement("UPDATE_FAIL")
 		if errors.Is(err, repo.HaveNotElementErr) {
-			log.Info().Msgf("internal db error: %v", err.Error())
+			logger.GlobalLogger.Info().Msgf("internal db error: %v", err.Error())
 			return &emptypb.Empty{}, status.Error(codes.InvalidArgument, err.Error())
 		}
-		log.Warn().Msgf("internal database error: %v", err.Error())
+		logger.GlobalLogger.Warn().Msgf("internal database error: %v", err.Error())
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	metrics.CounterIncrement("UPDATE")
 
-	fa.producer.Send(producer.Message{producer.UPDATE, req.GetFood().String()})
-
+	err = fa.producer.Send(producer.Message{
+		CmdType: producer.UPDATE,
+		Info:    req.GetFood().String()})
+	if err != nil {
+		logger.GlobalLogger.Warn().Msgf("Cant send msg to Kafka: %v", err.Error())
+	}
 	return &emptypb.Empty{}, nil
 }

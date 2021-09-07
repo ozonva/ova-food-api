@@ -3,8 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+
 	"net"
 	"net/http"
+
+	"github.com/rs/zerolog/log"
+
+	"github.com/ozonva/ova-food-api/internal/logger"
+
+	"github.com/ozonva/ova-food-api/internal/utils"
 
 	"github.com/ozonva/ova-food-api/internal/metrics"
 	"github.com/ozonva/ova-food-api/internal/tracer"
@@ -22,75 +29,81 @@ import (
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/ozonva/ova-food-api/internal/repo"
-	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 )
 
-const (
-	grpcPort    = ":8080"
-	dbHost      = "localhost"
-	dbPort      = "5432"
-	dbUser      = "postgres"
-	dbPassword  = "postgres"
-	dbName      = "postgres"
-	dbSslMode   = "disable"
-	dbDriver    = "pgx"
-	brokerKafka = "127.0.0.1:9092"
-	chunkSize   = 2
-	topic       = "cudFoods-topic"
-)
-
 func main() {
+
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+	config, err := utils.LoadConfig("./configs/config.yml")
+	if err != nil {
+		log.Fatal().Msgf("failed to read config")
+	}
+
+	logger.InitLogger(config.App.Logfile)
 
 	tracer.InitTracing("food-api tracer")
-	producerEx := initKafka(ctx)
+
+	producerEx := initKafka(ctx, config)
+
 	go initMetrics()
 
-	listen, err := net.Listen("tcp", grpcPort)
+	listen, err := net.Listen("tcp", config.Grpc.GRPCPort)
 	if err != nil {
-		log.Fatal().Msgf("failed to listen: %v", err)
+		logger.GlobalLogger.Fatal().Msgf("failed to listen: %v", err)
 	}
 	server := grpc.NewServer()
 
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		dbHost, dbPort, dbUser, dbPassword, dbName, dbSslMode)
-	db, err := sqlx.Open(dbDriver, psqlInfo)
-	if err != nil {
-		log.Error().Err(err).Msgf("failed to create connect to database")
-	}
+	db := initDB(config)
 	defer db.Close()
-	err = db.Ping()
-	if err != nil {
-		log.Error().Err(err).Msgf("failed to ping to database")
-	}
 	r := repo.NewRepo(db)
 
-	ova_food_api.RegisterOvaFoodApiServer(server, api.NewFoodAPI(r, chunkSize, *producerEx))
+	ova_food_api.RegisterOvaFoodApiServer(server, api.NewFoodAPI(r, config.App.AppChunkSize, *producerEx))
 	reflection.Register(server)
 
 	if err := server.Serve(listen); err != nil {
-		log.Fatal().Msgf("failed to serve %v", err)
+		logger.GlobalLogger.Fatal().Msgf("failed to serve %v", err)
 	}
 }
 
-func initKafka(ctx context.Context) *producer.Producer {
-	producerEx, err := producer.NewProducer([]string{brokerKafka}, topic)
+func initDB(config *utils.Config) *sqlx.DB {
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		config.Database.DBHost, config.Database.DBPort, config.Database.DBUser, config.Database.DBPassword,
+		config.Database.DBName, config.Database.DBSslMode)
+	db, err := sqlx.Open(config.Database.DBDriver, psqlInfo)
 	if err != nil {
-		log.Fatal().Msgf("failed to create producer: %v", err)
+		logger.GlobalLogger.Error().Err(err).Msgf("failed to create connect to database")
 	}
 
-	consumerEx, err := sarama.NewConsumer([]string{brokerKafka}, nil)
+	err = db.Ping()
 	if err != nil {
-		log.Fatal().Msgf("failed to create consumer: %v", err)
+		logger.GlobalLogger.Error().Err(err).Msgf("failed to ping to database")
 	}
-	consumer.Subscribe(ctx, topic, consumerEx)
+	return db
+}
+
+func initKafka(ctx context.Context, config *utils.Config) *producer.Producer {
+	producerEx, err := producer.NewProducer([]string{config.Kafka.KafkaBroker}, config.Kafka.KafkaTopic)
+
+	if err != nil {
+		logger.GlobalLogger.Fatal().Msgf("failed to create producer: %v", err)
+	}
+
+	consumerEx, err := sarama.NewConsumer([]string{config.Kafka.KafkaBroker}, nil)
+	if err != nil {
+		logger.GlobalLogger.Fatal().Msgf("failed to create consumer: %v", err)
+	}
+	consumer.Subscribe(ctx, config.Kafka.KafkaTopic, consumerEx)
 	return &producerEx
 }
+
 func initMetrics() {
 	metrics.RegisterMetrics()
 	http.Handle("/metrics", promhttp.Handler())
-	http.ListenAndServe(":2112", nil)
+	err := http.ListenAndServe(":2112", nil)
+	if err != nil {
+		logger.GlobalLogger.Warn().Msg("cant init metrics!")
+	}
 }
