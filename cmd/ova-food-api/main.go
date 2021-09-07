@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"net"
@@ -32,6 +33,10 @@ import (
 )
 
 func main() {
+
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	config, err := utils.LoadConfig("./configs/config.yml")
 	if err != nil {
 		log.Fatal().Msgf("failed to read config")
@@ -41,7 +46,7 @@ func main() {
 
 	tracer.InitTracing("food-api tracer")
 
-	producerEx := initKafka(config)
+	producerEx := initKafka(ctx, config)
 
 	go initMetrics()
 
@@ -57,6 +62,7 @@ func main() {
 
 	ova_food_api.RegisterOvaFoodApiServer(server, api.NewFoodAPI(r, config.App.AppChunkSize, *producerEx))
 	reflection.Register(server)
+
 	if err := server.Serve(listen); err != nil {
 		logger.GlobalLogger.Fatal().Msgf("failed to serve %v", err)
 	}
@@ -78,8 +84,9 @@ func initDB(config *utils.Config) *sqlx.DB {
 	return db
 }
 
-func initKafka(config *utils.Config) *producer.Producer {
+func initKafka(ctx context.Context, config *utils.Config) *producer.Producer {
 	producerEx, err := producer.NewProducer([]string{config.Kafka.KafkaBroker}, config.Kafka.KafkaTopic)
+
 	if err != nil {
 		logger.GlobalLogger.Fatal().Msgf("failed to create producer: %v", err)
 	}
@@ -88,7 +95,7 @@ func initKafka(config *utils.Config) *producer.Producer {
 	if err != nil {
 		logger.GlobalLogger.Fatal().Msgf("failed to create consumer: %v", err)
 	}
-	consumer.Subscribe(config.Kafka.KafkaTopic, consumerEx)
+	consumer.Subscribe(ctx, config.Kafka.KafkaTopic, consumerEx)
 	return &producerEx
 }
 

@@ -6,9 +6,12 @@ import (
 )
 
 var (
-	createCounter *prometheus.CounterVec
-	updateCounter *prometheus.CounterVec
-	removeCounter *prometheus.CounterVec
+	createCounter     *prometheus.CounterVec
+	updateCounter     *prometheus.CounterVec
+	removeCounter     *prometheus.CounterVec
+	createFailCounter *prometheus.CounterVec
+	updateFailCounter *prometheus.CounterVec
+	removeFailCounter *prometheus.CounterVec
 )
 
 func RegisterMetrics() {
@@ -24,6 +27,18 @@ func RegisterMetrics() {
 	removeCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "removeCounter"},
 		[]string{"operation"})
+
+	createCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "createFailCounter"},
+		[]string{"operation"})
+
+	updateCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "updateFailCounter"},
+		[]string{"operation"})
+
+	removeCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "removeFailCounter"},
+		[]string{"operation"})
 }
 
 func CounterIncrement(operation string) {
@@ -35,6 +50,12 @@ func CounterIncrement(operation string) {
 			updateCounter.With(prometheus.Labels{"operation": operation}).Inc()
 		case "DELETE":
 			removeCounter.With(prometheus.Labels{"operation": operation}).Inc()
+		case "CREATE_FAIL":
+			createFailCounter.With(prometheus.Labels{"operation": operation}).Inc()
+		case "UPDATE_FAIL":
+			updateFailCounter.With(prometheus.Labels{"operation": operation}).Inc()
+		case "DELETE_FAIL":
+			removeFailCounter.With(prometheus.Labels{"operation": operation}).Inc()
 		}
 
 	}

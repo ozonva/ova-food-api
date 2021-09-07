@@ -38,22 +38,7 @@ func (r *repoPostgres) AddEntities(ctx context.Context, foods []food.Food) error
 	}
 	return nil
 }
-func (r *repoPostgres) AddEntity(ctx context.Context, food food.Food) error {
-	query, args, err := sq.Insert(table).
-		Columns("user_id", "type", "name", "portion_size").
-		Values(food.UserId, food.Type, food.Name, food.PortionSize).
-		PlaceholderFormat(sq.Dollar).
-		ToSql()
-	if err != nil {
-		return err
-	}
-	_, err = r.db.ExecContext(ctx, query, args...)
-	if err != nil {
-		return err
-	}
 
-	return nil
-}
 func (r *repoPostgres) ListEntities(ctx context.Context, limit, offset uint64) ([]food.Food, error) {
 	query, args, err := sq.Select("*").
 		From(table).

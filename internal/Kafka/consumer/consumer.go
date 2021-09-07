@@ -1,11 +1,13 @@
 package consumer
 
 import (
+	"context"
+
 	"github.com/Shopify/sarama"
 	"github.com/ozonva/ova-food-api/internal/logger"
 )
 
-func Subscribe(topic string, consumer sarama.Consumer) {
+func Subscribe(ctx context.Context, topic string, consumer sarama.Consumer) {
 	partitionList, err := consumer.Partitions(topic)
 	if err != nil {
 		logger.GlobalLogger.Error().Err(err).Msg("Error retrieving partitionList ")
@@ -17,10 +19,17 @@ func Subscribe(topic string, consumer sarama.Consumer) {
 		if err != nil {
 			logger.GlobalLogger.Error().Err(err).Msg("Error retrieving partitionList ")
 		}
-		go func(partitionCons sarama.PartitionConsumer) {
-			for message := range partitionCons.Messages() {
-				logger.GlobalLogger.Info().Msgf("Message %s was readed from Kafka by consumer", string(message.Value))
+		go func(ctx context.Context, partitionCons sarama.PartitionConsumer) {
+			for {
+				select {
+				case message := <-partitionCons.Messages():
+					logger.GlobalLogger.Info().Msgf("Message %s was readed from Kafka by consumer", string(message.Value))
+				case <-ctx.Done():
+					logger.GlobalLogger.Warn().Msgf("Kafka was stopped")
+					return
+				}
+
 			}
-		}(partitionCons)
+		}(ctx, partitionCons)
 	}
 }

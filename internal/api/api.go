@@ -41,13 +41,17 @@ func (fa *FoodAPI) CreateFoodV1(ctx context.Context, req *desc.CreateFoodV1Reque
 		logger.GlobalLogger.Warn().Msgf("input parameter error: %v", err.Error())
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	err := fa.repo.AddEntity(ctx, food.Food{
-		Name:        req.GetFood().Name,
-		UserId:      req.GetFood().UserId,
-		Type:        uint8(req.GetFood().FoodT.Number()),
-		PortionSize: req.GetFood().PortionSize})
+	err := fa.repo.AddEntities(ctx, []food.Food{
+		{
+			Name:        req.GetFood().Name,
+			UserId:      req.GetFood().UserId,
+			Type:        uint8(req.GetFood().FoodT.Number()),
+			PortionSize: req.GetFood().PortionSize,
+		},
+	})
 	if err != nil {
 		logger.GlobalLogger.Warn().Msgf("internal database error: %v", err.Error())
+		metrics.CounterIncrement("CREATE_FAIL")
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -123,6 +127,7 @@ func (fa *FoodAPI) RemoveFoodV1(ctx context.Context, req *desc.RemoveFoodV1Reque
 	id := req.GetFoodId()
 	err := fa.repo.RemoveEntity(ctx, id)
 	if err != nil {
+		metrics.CounterIncrement("DELETE_FAIL")
 		if errors.Is(err, repo.HaveNotElementErr) {
 			logger.GlobalLogger.Info().Msgf("internal db error: %v", err.Error())
 			return &emptypb.Empty{}, status.Error(codes.InvalidArgument, err.Error())
@@ -210,6 +215,7 @@ func (fa *FoodAPI) UpdateFoodV1(ctx context.Context, req *desc.UpdateFoodV1Reque
 		Type:        uint8(req.GetFood().FoodT.Number()),
 		PortionSize: req.GetFood().PortionSize})
 	if err != nil {
+		metrics.CounterIncrement("UPDATE_FAIL")
 		if errors.Is(err, repo.HaveNotElementErr) {
 			logger.GlobalLogger.Info().Msgf("internal db error: %v", err.Error())
 			return &emptypb.Empty{}, status.Error(codes.InvalidArgument, err.Error())
